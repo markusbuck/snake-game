@@ -120,6 +120,7 @@ public static class Networking
             if (!foundIPV4)
             {
                 // TODO: Indicate an error to the user, as specified in the documentation
+                SocketState errorState = new SocketState(toCall, "Error Occurred while trying to find IP Address");
             }
         }
         catch (Exception)
@@ -132,6 +133,7 @@ public static class Networking
             catch (Exception)
             {
                 // TODO: Indicate an error to the user, as specified in the documentation
+                SocketState errorState = new SocketState(toCall, "Host Name is invalid");
             }
         }
 
@@ -143,7 +145,9 @@ public static class Networking
         // game like ours will be 
         socket.NoDelay = true;
 
-        // TODO: Finish the remainder of the connection process as specified.
+        // TODO: Finish the remainder of the connection process as specified ADD TIMEOUT.
+        SocketState state = new SocketState(toCall, socket);
+        state.TheSocket.BeginConnect(ipAddress,port,ConnectedCallback, socket);
     }
 
     /// <summary>
