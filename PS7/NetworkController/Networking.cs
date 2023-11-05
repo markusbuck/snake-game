@@ -20,7 +20,11 @@ public static class Networking
     /// <param name="port">The the port to listen on</param>
     public static TcpListener StartServer(Action<SocketState> toCall, int port)
     {
-        throw new NotImplementedException();
+        TcpListener tcpListener = new TcpListener(IPAddress.Any,port);
+        (TcpListener listener, Action<SocketState> action)  state = (tcpListener, toCall);
+        tcpListener.Start();
+        tcpListener.BeginAcceptSocket(AcceptNewClient, state);
+        return tcpListener;
     }
 
     /// <summary>
@@ -43,7 +47,24 @@ public static class Networking
     /// 1) a delegate so the user can take action (a SocketState Action), and 2) the TcpListener</param>
     private static void AcceptNewClient(IAsyncResult ar)
     {
-        throw new NotImplementedException();
+        (TcpListener listener, Action<SocketState> action) tuple =
+            ((TcpListener listener, Action<SocketState> action))ar.AsyncState!;
+        SocketState state;
+        try
+        {
+            Socket newClient = tuple.listener.EndAcceptSocket(ar);
+            state = new SocketState(tuple.action, newClient);
+            state.OnNetworkAction(state);
+        } catch(Exception) {
+            state = new SocketState(tuple.action, "Error Occured while attempting to connect");
+        }
+
+        if(state.ErrorOccurred == false)
+        {
+            tuple.listener.BeginAcceptSocket(AcceptNewClient, tuple);
+        }
+
+
     }
 
     /// <summary>
@@ -51,7 +72,7 @@ public static class Networking
     /// </summary>
     public static void StopServer(TcpListener listener)
     {
-        throw new NotImplementedException();
+        listener.Stop();
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////
