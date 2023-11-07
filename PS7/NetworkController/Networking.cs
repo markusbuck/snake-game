@@ -57,6 +57,7 @@ public static class Networking
             state.OnNetworkAction(state);
         } catch(Exception) {
             state = new SocketState(tuple.action, "Error Occured while attempting to connect");
+            state.OnNetworkAction(state);
         }
 
         if(state.ErrorOccurred == false)
@@ -121,6 +122,7 @@ public static class Networking
             {
                 // TODO: Indicate an error to the user, as specified in the documentation
                 SocketState errorState = new SocketState(toCall, "Error Occurred while trying to find IP Address");
+                errorState.OnNetworkAction(errorState);
             }
         }
         catch (Exception)
@@ -134,6 +136,7 @@ public static class Networking
             {
                 // TODO: Indicate an error to the user, as specified in the documentation
                 SocketState errorState = new SocketState(toCall, "Host Name is invalid");
+                errorState.OnNetworkAction(errorState);
             }
         }
 
@@ -147,13 +150,15 @@ public static class Networking
 
         // TODO: Finish the remainder of the connection process as specified ADD TIMEOUT.
         SocketState state = new SocketState(toCall, socket);
-        //state.TheSocket.BeginConnect(ipAddress,port,ConnectedCallback, socket);
 
         IAsyncResult result = state.TheSocket.BeginConnect(ipAddress, port, ConnectedCallback, state);
-        result.AsyncWaitHandle.WaitOne(3000, true);
+        bool success = result.AsyncWaitHandle.WaitOne(3000);
 
-        if(!socket.Connected)
+
+        if(!success || !socket.Connected)
         {
+            SocketState errorState = new SocketState(toCall, "Socket Failed to Connect");
+            errorState.OnNetworkAction(errorState);
             socket.Close();
         }
     }
@@ -206,7 +211,7 @@ public static class Networking
     {
         try
         {
-            state.TheSocket.BeginReceive(state.buffer, 0, state.TheSocket.ReceiveBufferSize, SocketFlags.None, ReceiveCallback, state);
+            state.TheSocket.BeginReceive(state.buffer, 0, state.buffer.Length, SocketFlags.None, ReceiveCallback, state);
 
         }
         catch (Exception)
