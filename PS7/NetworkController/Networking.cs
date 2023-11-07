@@ -248,15 +248,23 @@ public static class Networking
         try
         {
             int result = state.TheSocket.EndReceive(ar);
-            string message = Encoding.UTF8.GetString(state.buffer, 0, result);
 
-            lock(state.data)
+            if (result == 0)
             {
-                state.data.Append(message);
-
+                state.ErrorOccurred = true;
             }
+            else
+            {
+                string message = Encoding.UTF8.GetString(state.buffer, 0, result);
 
-            state.OnNetworkAction(state);
+                lock (state.data)
+                {
+                    state.data.Append(message);
+
+                }
+
+                state.OnNetworkAction(state);
+            }
         }
 
         catch (Exception)
