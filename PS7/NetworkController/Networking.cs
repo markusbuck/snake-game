@@ -20,11 +20,18 @@ public static class Networking
     /// <param name="port">The the port to listen on</param>
     public static TcpListener StartServer(Action<SocketState> toCall, int port)
     {
-        TcpListener tcpListener = new TcpListener(IPAddress.Any,port);
-        (TcpListener listener, Action<SocketState> action)  state = (tcpListener, toCall);
-        tcpListener.Start();
-        tcpListener.BeginAcceptSocket(AcceptNewClient, state);
-        return tcpListener;
+        TcpListener tcpListener = new TcpListener(IPAddress.Any, port);
+        try
+        {
+            (TcpListener listener, Action<SocketState> action) state = (tcpListener, toCall);
+            tcpListener.Start();
+            tcpListener.BeginAcceptSocket(AcceptNewClient, state);
+            return tcpListener;
+        }
+        catch
+        {
+            return tcpListener; 
+        }
     }
 
     /// <summary>
@@ -55,12 +62,14 @@ public static class Networking
             Socket newClient = tuple.listener.EndAcceptSocket(ar);
             state = new SocketState(tuple.action, newClient);
             state.OnNetworkAction(state);
-        } catch(Exception) {
+        }
+        catch (Exception)
+        {
             state = new SocketState(tuple.action, "Error Occured while attempting to connect");
             state.OnNetworkAction(state);
         }
 
-        if(state.ErrorOccurred == false)
+        if (state.ErrorOccurred == false)
         {
             tuple.listener.BeginAcceptSocket(AcceptNewClient, tuple);
         }
@@ -155,7 +164,7 @@ public static class Networking
         bool success = result.AsyncWaitHandle.WaitOne(3000);
 
 
-        if(!success || !socket.Connected)
+        if (!success || !socket.Connected)
         {
             SocketState errorState = new SocketState(toCall, "Socket Failed to Connect");
             errorState.OnNetworkAction(errorState);
@@ -244,7 +253,7 @@ public static class Networking
     private static void ReceiveCallback(IAsyncResult ar)
     {
         SocketState state = (SocketState)ar.AsyncState!;
-        
+
         try
         {
             int result = state.TheSocket.EndReceive(ar);
@@ -289,19 +298,27 @@ public static class Networking
     {
         try
         {
-            if(socket.Connected)
+            if (socket.Connected)
             {
                 byte[] bytes = Encoding.UTF8.GetBytes(data);
                 socket.BeginSend(bytes, 0, bytes.Length, SocketFlags.None, SendCallback, socket);
                 return true;
             }
             return false;
-           
+
         }
 
-        catch(Exception)
+        catch (Exception)
         {
-            socket.Close();
+            try
+            {
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Close();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             return false;
         }
     }
@@ -326,8 +343,17 @@ public static class Networking
             socket.EndSend(ar);
         }
 
-        catch(Exception)
+        catch (Exception)
         {
+            try
+            {
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Close();
+            }
+            catch (Exception)
+            {
+                return;
+            }
             return;
         }
     }
@@ -361,7 +387,15 @@ public static class Networking
 
         catch (Exception)
         {
-            socket.Close();
+            try
+            {
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Close();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
             return false;
         }
     }
@@ -391,7 +425,16 @@ public static class Networking
 
         catch (Exception)
         {
-            socket.Close();
+            try
+            {
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Close();
+            }
+            catch (Exception)
+            {
+                return;
+            }
+            return;
         }
     }
 }
