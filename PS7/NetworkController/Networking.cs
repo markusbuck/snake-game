@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Authors: Daniel Kopta, May 2019, Travis Martin 2023, Kevin Soto-Miranda 2023, Markus Buckwalter 2023
+// University of Utah
+
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -7,10 +10,6 @@ namespace NetworkUtil;
 
 public static class Networking
 {
-    /////////////////////////////////////////////////////////////////////////////////////////
-    // Server-Side Code
-    /////////////////////////////////////////////////////////////////////////////////////////
-
     /// <summary>
     /// Starts a TcpListener on the specified port and starts an event-loop to accept new clients.
     /// The event-loop is started with BeginAcceptSocket and uses AcceptNewClient as the callback.
@@ -85,10 +84,6 @@ public static class Networking
         listener.Stop();
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////
-    // Client-Side Code
-    /////////////////////////////////////////////////////////////////////////////////////////
-
     /// <summary>
     /// Begins the asynchronous process of connecting to a server via BeginConnect, 
     /// and using ConnectedCallback as the method to finalize the connection once it's made.
@@ -107,9 +102,6 @@ public static class Networking
     /// <param name="port">The port on which the server is listening</param>
     public static void ConnectToServer(Action<SocketState> toCall, string hostName, int port)
     {
-        // TODO: This method is incomplete, but contains a starting point 
-        //       for decoding a host address
-
         // Establish the remote endpoint for the socket.
         IPHostEntry ipHostInfo;
         IPAddress ipAddress = IPAddress.None;
@@ -129,7 +121,6 @@ public static class Networking
             // Didn't find any IPV4 addresses
             if (!foundIPV4)
             {
-                // TODO: Indicate an error to the user, as specified in the documentation
                 SocketState errorState = new SocketState(toCall, "Error Occurred while trying to find IP Address");
                 errorState.OnNetworkAction(errorState);
             }
@@ -143,7 +134,6 @@ public static class Networking
             }
             catch (Exception)
             {
-                // TODO: Indicate an error to the user, as specified in the documentation
                 SocketState errorState = new SocketState(toCall, "Host Name is invalid");
                 errorState.OnNetworkAction(errorState);
             }
@@ -157,7 +147,6 @@ public static class Networking
         // game like ours will be 
         socket.NoDelay = true;
 
-        // TODO: Finish the remainder of the connection process as specified ADD TIMEOUT.
         SocketState state = new SocketState(toCall, socket);
 
         IAsyncResult result = state.TheSocket.BeginConnect(ipAddress, port, ConnectedCallback, state);
@@ -197,13 +186,9 @@ public static class Networking
         catch (Exception)
         {
             SocketState errorState = new SocketState(socketState.OnNetworkAction, "Something went wrong while connecting");
+            errorState.OnNetworkAction(errorState);
         }
     }
-
-
-    /////////////////////////////////////////////////////////////////////////////////////////
-    // Server and Client Common Code
-    /////////////////////////////////////////////////////////////////////////////////////////
 
     /// <summary>
     /// Begins the asynchronous process of receiving data via BeginReceive, using ReceiveCallback 
@@ -261,6 +246,7 @@ public static class Networking
             if (result == 0)
             {
                 state.ErrorOccurred = true;
+                state.OnNetworkAction(state);
             }
             else
             {
@@ -280,6 +266,7 @@ public static class Networking
         {
             state.ErrorMessage = "Error occured on RecieveCallback";
             state.ErrorOccurred = true;
+            state.OnNetworkAction(state);
         }
 
     }
