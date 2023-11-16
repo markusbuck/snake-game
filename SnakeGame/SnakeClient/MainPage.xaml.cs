@@ -65,6 +65,7 @@ public partial class MainPage : ContentPage
             DisplayAlert("Error", "Name must be less than 16 characters", "OK");
             return;
         }
+
         DisplayAlert("Delete this", "Code to start the controller's connecting process goes here", "OK");
 
         keyboardHack.Focus();
