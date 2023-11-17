@@ -1,10 +1,15 @@
-﻿namespace SnakeGame;
+﻿using GameController;
+namespace SnakeGame;
 
 public partial class MainPage : ContentPage
 {
+    GameController.GameController gameController = new();
     public MainPage()
     {
         InitializeComponent();
+        //gameController.MessagesArrived += DisplayMessages;
+        gameController.Connected += HandleConnected;
+        gameController.Error += ShowError;
         graphicsView.Invalidate();
     }
 
@@ -34,6 +39,25 @@ public partial class MainPage : ContentPage
             // Move right
         }
         entry.Text = "";
+    }
+
+    private void HandleConnected()
+    {
+        gameController.StartSend(nameText.Text);
+    }
+
+    private void ShowError(string err)
+    {
+        // Show the error
+        Dispatcher.Dispatch(() => DisplayAlert("Error", err, "OK"));
+
+        // Then re-enable the controlls so the user can reconnect
+        Dispatcher.Dispatch(
+          () =>
+          {
+              connectButton.IsEnabled = true;
+              serverText.IsEnabled = true;
+          });
     }
 
     private void NetworkErrorHandler()
@@ -66,8 +90,10 @@ public partial class MainPage : ContentPage
             return;
         }
 
-        DisplayAlert("Delete this", "Code to start the controller's connecting process goes here", "OK");
+        connectButton.IsEnabled = false;
+        serverText.IsEnabled = false;
 
+        gameController.JoinServer(serverText.Text);
         keyboardHack.Focus();
     }
 

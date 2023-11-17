@@ -61,4 +61,7 @@
 	  <EmbeddedResource Include="Resources\Images\background.png" />
 	  <EmbeddedResource Include="Resources\Images\wallsprite.png" />
 	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\GameController\GameController.csproj" />
+	</ItemGroup>
 </Project>

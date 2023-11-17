@@ -239,8 +239,8 @@ public static class Networking
     {
         SocketState state = (SocketState)ar.AsyncState!;
 
-        try
-        {
+        //try
+        //{
             int result = state.TheSocket.EndReceive(ar);
 
             if (result == 0)
@@ -260,14 +260,15 @@ public static class Networking
 
                 state.OnNetworkAction(state);
             }
-        }
+        //}
 
-        catch (Exception)
-        {
-            state.ErrorMessage = "Error occured on RecieveCallback";
-            state.ErrorOccurred = true;
-            state.OnNetworkAction(state);
-        }
+        //catch (Exception)
+        //{
+            
+            //state.ErrorMessage = "Error occured on RecieveCallback";
+            //state.ErrorOccurred = true;
+            //state.OnNetworkAction(state);
+        //}
 
     }
 
