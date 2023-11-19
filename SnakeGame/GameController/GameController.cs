@@ -9,24 +9,19 @@ namespace GameController
     public class GameController
     {
         private World? world = null;
-        public delegate void JSONHandler(IEnumerable<string> messages);
-        public event JSONHandler? JSONArrived;
         public delegate void ConnectedHandler();
         public event ConnectedHandler? Connected;
         public delegate void ErrorHandler(string err);
         public event ErrorHandler? Error;
 
         private SocketState? server = null;
-
-
-
+       
         public void StartSend(string playerID)
         {
             playerID += "\n";
             Console.WriteLine("starting to send: " + playerID);
 
             Networking.Send(server.TheSocket, playerID );
-
         }
 
         public void JoinServer(string hostname)
@@ -76,7 +71,6 @@ namespace GameController
 
             // Loop until we have processed all messages.
             // We may have received more than one.
-
             List<string> newMessages = new List<string>();
 
             foreach (string p in parts)
@@ -88,8 +82,10 @@ namespace GameController
                 // So we need to ignore it if this happens. 
                 if (p[p.Length - 1] != '\n')
                     break;
-
+                //if (p[0] != '\n')
+                    //break;
                 // build a list of messages to send to the view
+                
                 newMessages.Add(p);
 
 
@@ -98,35 +94,32 @@ namespace GameController
                 if (world is null && newMessages.Count == 2)
                 {
                     Int32.TryParse(newMessages.ElementAt<string>(1), out int worldSize);
-                    World world = new World(worldSize);
+                    this.world = new World(worldSize);
+                    state.RemoveData(0, p.Length);
+                    continue;
                 }
 
                 if (Int32.TryParse(p, out int worldSizez))
                 {
+                    state.RemoveData(0, p.Length);
                     continue;
                 }
 
-                string data = "{\"wall\":0,\"p1\":{\"x\":-575.0,\"y\":-575.0},\"p2\":{\"x\":575.0,\"y\":-575.0}}";
-                JsonDocument doc = JsonDocument.Parse(data);
-
-             
+                JsonDocument doc = JsonDocument.Parse(p);
                 if (doc.RootElement.TryGetProperty("wall", out _))
                 {
-                    Console.WriteLine(data);
-                    Wall wall = JsonSerializer.Deserialize<Wall>(data);
-                    this.world.Walls[wall.wall] = wall;
+                    Wall? wall = JsonSerializer.Deserialize<Wall>(doc);
+                    world.Walls[wall.wall] = wall;
                 }
                 else if (doc.RootElement.TryGetProperty("snake", out _))
-                {
-                    Console.WriteLine(doc.ToString());
-                    Snake player = JsonSerializer.Deserialize<Snake>(doc);
+                { 
+                    Snake? player = JsonSerializer.Deserialize<Snake>(doc);
                     this.world.Snakes[player.snake] = player;
                 }
 
                 else if (doc.RootElement.TryGetProperty("power", out _))
                 {
-                    Console.WriteLine(doc.ToString());
-                    PowerUp powerUp = JsonSerializer.Deserialize<PowerUp>(doc);
+                    PowerUp? powerUp = JsonSerializer.Deserialize<PowerUp>(doc);
                     this.world.PowerUps[powerUp.power] = powerUp;
                 }
 
@@ -134,35 +127,8 @@ namespace GameController
                 state.RemoveData(0, p.Length);
             }
 
-
-            foreach (string message in parts)
-            {
-                Console.WriteLine(message);
-            }
-
-            Console.WriteLine("debug");
             // inform the view
             //MessagesArrived?.Invoke(newMessages);
-        }
-
-        private void ReceiveJSON(SocketState state)
-        {
-            Console.WriteLine("Receiving Started");
-            if (state.ErrorOccurred)
-            {
-                Error?.Invoke("Connection to the Server was interupted");
-                return;
-            }
-            ParseJSON(state);
-            Networking.GetData(state);
-        }
-
-        private void ParseJSON(SocketState state)
-        {
-            Console.WriteLine("Attempting to Parse");
-            JsonDocument doc = JsonDocument.Parse(state.GetData());
-            if (doc.RootElement.TryGetProperty("wall", out _))
-                Console.WriteLine(doc.ToString());
         }
 
         private void UpdateCameFromServer(IEnumerable<Snake> players, IEnumerable<PowerUp> powerups)

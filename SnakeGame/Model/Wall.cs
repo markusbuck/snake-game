@@ -5,10 +5,21 @@ namespace Model
 {
 	public class Wall
 	{
-		public int wall;
-		public Vector2D p1;
-		public Vector2D p2;
-
+		public int wall
+		{
+			get;
+			set;
+		}
+		public Vector2D p1
+		{
+			get;
+			set;
+		}
+		public Vector2D p2
+		{
+			get;
+			set;
+		}
 		[JsonConstructor]
 		public Wall(int wall, Vector2D p1, Vector2D p2)
 		{

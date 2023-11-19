@@ -264,7 +264,6 @@ public static class Networking
 
         catch (Exception)
         {
-            
             state.ErrorMessage = "Error occured on RecieveCallback";
             state.ErrorOccurred = true;
             state.OnNetworkAction(state);

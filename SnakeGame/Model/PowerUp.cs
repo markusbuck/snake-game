@@ -5,11 +5,23 @@ namespace Model
 {
 	public class PowerUp
 	{
-		public int power;
-		public Vector2D loc;
-		public bool died;
+		public int power
+		{
+			get;
+			set;
+		}
+        public Vector2D loc
+        {
+            get;
+            set;
+        }
+        public bool died
+        {
+            get;
+            set;
+        }
 
-		[JsonConstructor]
+        [JsonConstructor]
 		public PowerUp(int power, Vector2D loc, bool died)
 		{
 			this.power = power;
