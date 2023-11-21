@@ -10,14 +10,16 @@ namespace Model
 		public Dictionary<int, Wall> Walls;
 		public int Size
 		{ get; private set; }
+        public int CurrentSnake { get; private set; }
 
-		public World(int _size)
+		public World(int _size, int currentSnake)
 		{
 
 			Snakes = new Dictionary<int, Snake>();
 			PowerUps = new Dictionary<int, PowerUp>();
 			Walls = new Dictionary<int, Wall>();
 			Size = _size;
+            this.CurrentSnake = currentSnake;
 		}
 
         private void UpdateCameFromServer(IEnumerable<Snake> players, IEnumerable<PowerUp> powerups)

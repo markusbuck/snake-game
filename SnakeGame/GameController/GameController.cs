@@ -94,7 +94,8 @@ namespace GameController
                 if (world is null && newMessages.Count == 2)
                 {
                     Int32.TryParse(newMessages.ElementAt<string>(1), out int worldSize);
-                    this.world = new World(worldSize);
+                    Int32.TryParse(newMessages.ElementAt(0), out int snakeID);
+                    this.world = new World(worldSize, snakeID);
                     state.RemoveData(0, p.Length);
                     continue;
                 }
