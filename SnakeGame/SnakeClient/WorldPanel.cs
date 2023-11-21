@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using Model;
 using IImage = Microsoft.Maui.Graphics.IImage;
 #if MACCATALYST
 using Microsoft.Maui.Graphics.Platform;
@@ -17,8 +18,12 @@ using SizeF = Microsoft.Maui.Graphics.SizeF;
 
 
 namespace SnakeGame;
-public class WorldPanel : IDrawable
+public class WorldPanel : ScrollView,IDrawable
 {
+
+    public delegate void ObjectDrawer(object o, ICanvas canvas);
+    private GraphicsView graphicsView = new();
+    private World theWorld;
     private IImage wall;
     private IImage background;
 
@@ -40,7 +45,19 @@ public class WorldPanel : IDrawable
 
     public WorldPanel()
     {
+        BackgroundColor = Colors.White; 
+        graphicsView.Drawable = this;
+        graphicsView.HeightRequest = 2000;
+        graphicsView.WidthRequest = 2000;
+        graphicsView.BackgroundColor = Colors.White;
+        this.Content = graphicsView;
     }
+
+    public void SetWorld(World w)
+    {
+        theWorld = w;
+    }
+
 
     private void InitializeDrawing()
     {
@@ -48,6 +65,30 @@ public class WorldPanel : IDrawable
         background = loadImage( "background.png" );
         initializedForDrawing = true;
     }
+
+    /// <summary>
+    /// This method performs a translation and rotation to draw an object.
+    /// </summary>
+    /// <param name="canvas">The canvas object for drawing onto</param>
+    /// <param name="o">The object to draw</param>
+    /// <param name="worldX">The X component of the object's position in world space</param>
+    /// <param name="worldY">The Y component of the object's position in world space</param>
+    /// <param name="angle">The orientation of the object, measured in degrees clockwise from "up"</param>
+    /// <param name="drawer">The drawer delegate. After the transformation is applied, the delegate is invoked to draw whatever it wants</param>
+    private void DrawObjectWithTransform(ICanvas canvas, object o, double worldX, double worldY, double angle, ObjectDrawer drawer)
+    {
+        // "push" the current transform
+        canvas.SaveState();
+
+        canvas.Translate((float)worldX, (float)worldY);
+        canvas.Rotate((float)angle);
+        drawer(o, canvas);
+
+        // "pop" the transform
+        canvas.RestoreState();
+    }
+
+
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
@@ -59,7 +100,8 @@ public class WorldPanel : IDrawable
 
         // example code for how to draw
         // (the image is not visible in the starter code)
-        canvas.DrawImage(wall, 0, 0, wall.Width, wall.Height);
+        //canvas.DrawImage(wall, 0, 0, wall.Width, wall.Height);
+        canvas.DrawImage(background, 0, 0, 2000, 2000);
     }
 
 }

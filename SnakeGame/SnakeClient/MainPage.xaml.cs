@@ -3,14 +3,14 @@ namespace SnakeGame;
 
 public partial class MainPage : ContentPage
 {
-    GameController.GameController gameController = new();
+    GameController.GameController gameController;
     public MainPage()
     {
         InitializeComponent();
-        //gameController.MessagesArrived += DisplayMessages;
+        gameController = new GameController.GameController();
         gameController.Connected += HandleConnected;
         gameController.Error += ShowError;
-        graphicsView.Invalidate();
+        gameController.Updated += OnFrame;
     }
 
     void OnTapped(object sender, EventArgs args)
@@ -25,18 +25,22 @@ public partial class MainPage : ContentPage
         if (text == "w")
         {
             // Move up
+            gameController.SendCommand("up");
         }
         else if (text == "a")
         {
             // Move left
+            gameController.SendCommand("left");
         }
         else if (text == "s")
         {
             // Move down
+            gameController.SendCommand("down");
         }
         else if (text == "d")
         {
             // Move right
+            gameController.SendCommand("right");
         }
         entry.Text = "";
     }

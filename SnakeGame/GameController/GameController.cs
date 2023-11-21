@@ -13,6 +13,8 @@ namespace GameController
         public event ConnectedHandler? Connected;
         public delegate void ErrorHandler(string err);
         public event ErrorHandler? Error;
+        public delegate void UpdateHandler();
+        public event UpdateHandler? Updated;
 
         private SocketState? server = null;
        
@@ -41,9 +43,7 @@ namespace GameController
             Connected?.Invoke();
 
             state.OnNetworkAction = ReceiveMessage;
-            //state.OnNetworkAction = ReceiveJSON;
-
-            Console.WriteLine("Connected");
+            
             Networking.GetData(state);
         }
 
@@ -82,14 +82,9 @@ namespace GameController
                 // So we need to ignore it if this happens. 
                 if (p[p.Length - 1] != '\n')
                     break;
-                //if (p[0] != '\n')
-                    //break;
                 // build a list of messages to send to the view
                 
                 newMessages.Add(p);
-
-
-                Console.WriteLine("debug");
 
                 if (world is null && newMessages.Count == 2)
                 {
@@ -115,6 +110,7 @@ namespace GameController
                 { 
                     Snake? player = JsonSerializer.Deserialize<Snake>(doc);
                     this.world.Snakes[player.snake] = player;
+                    Console.WriteLine(p);
                 }
 
                 else if (doc.RootElement.TryGetProperty("power", out _))
@@ -128,38 +124,13 @@ namespace GameController
             }
 
             // inform the view
-            //MessagesArrived?.Invoke(newMessages);
+            Updated?.Invoke();
         }
 
-        private void UpdateCameFromServer(IEnumerable<Snake> players, IEnumerable<PowerUp> powerups)
+        public void SendCommand(string dir)
         {
-            //Random r = new Random(); // ignore this for now
-
-            // The server is not required to send updates about every object,
-            // so we update our local copy of the world only for the objects that
-            // the server gave us an update for.
-            foreach (Snake play in players)
-            {
-                //while (r.Next() % 1000 != 0) ; // ignore this loop for now
-                if (!play.alive)
-                    world.Snakes.Remove(play.snake);
-                else
-                    world.Snakes[play.snake] = play;
-            }
-
-            foreach (PowerUp pow in powerups)
-            {
-                if (pow.died)
-                    world.PowerUps.Remove(pow.power);
-                else
-                    world.PowerUps[pow.power] = pow;
-            }
-            // Notify any listeners (the view) that a new game world has arrived from the server
-            //UpdateArrived?.Invoke();
-
-            // TODO: for whatever user inputs happened during the last frame, process them.
+            Networking.Send(server.TheSocket, "{\"moving\": \"" + dir + "\"}");
         }
-
     }
 }
 
