@@ -45,11 +45,11 @@ public class WorldPanel : ScrollView,IDrawable
 
     public WorldPanel()
     {
-        BackgroundColor = Colors.White; 
+        BackgroundColor = Colors.Black; 
         graphicsView.Drawable = this;
         graphicsView.HeightRequest = 2000;
         graphicsView.WidthRequest = 2000;
-        graphicsView.BackgroundColor = Colors.White;
+        graphicsView.BackgroundColor = Colors.Black;
         this.Content = graphicsView;
     }
 
@@ -101,7 +101,11 @@ public class WorldPanel : ScrollView,IDrawable
         // example code for how to draw
         // (the image is not visible in the starter code)
         //canvas.DrawImage(wall, 0, 0, wall.Width, wall.Height);
-        canvas.DrawImage(background, 0, 0, 2000, 2000);
+        if (theWorld != null)
+        {
+            canvas.DrawImage(background, (-theWorld.Size/2), (-theWorld.Size / 2), theWorld.Size,
+                theWorld.Size);
+        }
     }
 
 }

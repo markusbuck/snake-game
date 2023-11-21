@@ -8,7 +8,12 @@ namespace GameController
 {
     public class GameController
     {
-        private World? world = null;
+        public World? world
+        {
+            get;
+
+            private set;
+        }
         public delegate void ConnectedHandler();
         public event ConnectedHandler? Connected;
         public delegate void ErrorHandler(string err);
@@ -17,7 +22,7 @@ namespace GameController
         public event UpdateHandler? Updated;
 
         private SocketState? server = null;
-       
+
         public void StartSend(string playerID)
         {
             playerID += "\n";

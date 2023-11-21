@@ -11,6 +11,7 @@ public partial class MainPage : ContentPage
         gameController.Connected += HandleConnected;
         gameController.Error += ShowError;
         gameController.Updated += OnFrame;
+        worldPanel.SetWorld(gameController.world);
     }
 
     void OnTapped(object sender, EventArgs args)
@@ -106,6 +107,7 @@ public partial class MainPage : ContentPage
     /// </summary>
     public void OnFrame()
     {
+        worldPanel.SetWorld(gameController.world);
         Dispatcher.Dispatch(() => graphicsView.Invalidate());
     }
 
