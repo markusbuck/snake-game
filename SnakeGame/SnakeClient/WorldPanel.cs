@@ -114,6 +114,11 @@ public class WorldPanel : ScrollView,IDrawable
         canvas.StrokeColor = Colors.Red;
         canvas.StrokeSize = 10;
         canvas.DrawLine(0, 0, 0, -segmentLength);
+
+        //canvas.FontColor = Colors.White;
+        //canvas.FontSize = 18;
+        //canvas.Font = Font.Default;
+        //canvas.DrawString("Kevin:", 0, -segmentLength, 100,100,  HorizontalAlignment.Left, VerticalAlignment.Top);
     }
 
     private void WallDrawer(object o, ICanvas canvas)
@@ -122,7 +127,36 @@ public class WorldPanel : ScrollView,IDrawable
         
         int width = 50;
 
-        canvas.DrawImage(this.wall, (float) -wall.p1.GetX() / 2, (float) -wall.p1.GetY() / 2, width, 50);
+        double xLength = Math.Abs(wall.p1.GetX() - wall.p2.GetX());
+        double yLength = Math.Abs(wall.p1.GetY() - wall.p2.GetY());
+
+        if (xLength > yLength)
+        {
+            int wallSegments = (int)xLength / 50;
+            Vector2D leftPoint = (wall.p1.GetX() < wall.p2.GetX()) ? wall.p1 : wall.p2;
+            for(int segment = 0; segment < wallSegments + 1; segment++)
+            {
+                float x = (float)leftPoint.GetX() - (width / 2) + segment * width;
+                float y = (float)leftPoint.GetY() - (width / 2);
+
+                canvas.DrawImage(this.wall, x, y, width, width);
+                //Console.WriteLine(x + " " + y);
+            }
+        }
+
+        else
+        {
+            int wallSegments = (int)yLength / 50;
+            Vector2D topPoint = (wall.p1.GetY() > wall.p2.GetY()) ? wall.p1 : wall.p2;
+            for (int segment = 0; segment < wallSegments; segment++)
+            {
+                float x = (float)topPoint.GetX() - (width / 2);
+                float y = (float)topPoint.GetY() - (width / 2) - (segment * width);
+                canvas.DrawImage(this.wall, x, y, width, width);
+                //Console.WriteLine(x + " " + y);
+            }
+        }
+        //canvas.DrawImage(this.wall, (float) -wall.p1.GetX() / 2, (float) -wall.p1.GetY() / 2, width, 50);
     }
 
 
@@ -143,8 +177,8 @@ public class WorldPanel : ScrollView,IDrawable
             if (theWorld != null)
             {
 
-                float playerX = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetX();
-                float playerY = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetY();
+                float playerX = (float)theWorld.Snakes[theWorld.CurrentSnake].body[1].GetX();
+                float playerY = (float)theWorld.Snakes[theWorld.CurrentSnake].body[1].GetY();
                 canvas.Translate(-playerX + (viewSize / 2), -playerY + (viewSize / 2));
 
 
@@ -158,34 +192,71 @@ public class WorldPanel : ScrollView,IDrawable
 
                 foreach (var wall in theWorld.Walls.Values)
                 {
-                    DrawObjectWithTransform(canvas, wall, wall.p1.X, wall.p1.Y, 0, WallDrawer);
+                    DrawObjectWithTransform(canvas, wall, 0, 0, 0, WallDrawer);
                 }
 
                 foreach (var snake in theWorld.Snakes.Values)
                 {
-                    double segnmentLength = 0;
+                    double segmentLength = 0;
                     double segmentDirection = 0;
 
-                    foreach (var bodyPart in snake.body)
+                    Vector2D head = snake.body[1];
+                    Vector2D tail = snake.body[0];
+
+                    if (snake.dir.GetX() != 0.0)
                     {
-                        Vector2D vector = new Vector2D(bodyPart.GetX(), bodyPart.GetY());
-                        vector.Normalize();
-                        segnmentLength += bodyPart.Length();
-                        segmentDirection += vector.ToAngle();
+                        segmentLength = Math.Abs(head.GetX() - tail.GetX());
+
+                        if(snake.dir.GetX() > 0)
+                        {
+                            segmentDirection = -90;
+                        }
+
+                        else
+                        {
+                            segmentDirection = 90;
+
+                        }
                     }
 
-                    float angle = Vector2D.AngleBetweenPoints(snake.body[0], snake.body[1]);
-                    double segmentX = snake.body[0].GetX();
-                    double segmentY = snake.body[0].GetY();
+                    else
+                    {
+                        segmentLength = Math.Abs(head.GetY() - tail.GetY());
 
-                    DrawObjectWithTransform(canvas, segnmentLength, segmentX, segmentY, angle, SnakeSegmentDrawer);
+                        if (snake.dir.GetY() > 0)
+                        {
+                            segmentDirection = 0;
+                        }
+
+                        else
+                        {
+                            segmentDirection = -180;
+
+                        }
+
+                    }
+
+
+                    //foreach (var bodyPart in snake.body)
+                    //{
+                    //    Vector2D vector = new Vector2D(bodyPart.GetX(), bodyPart.GetY());
+                    //    vector.Normalize();
+                    //    segmentLength += bodyPart.Length();
+                    //    segmentDirection += vector.ToAngle();
+                    //}
+
+                    //float angle = Vector2D.AngleBetweenPoints(snake.body[0], snake.body[1]);
+                    double segmentX = snake.body[1].GetX();
+                    double segmentY = snake.body[1].GetY();
+                    //Console.WriteLine( "WorldPanel: " + segmentX + " " + segmentY);
+
+                    DrawObjectWithTransform(canvas, segmentLength, segmentX, segmentY, segmentDirection, SnakeSegmentDrawer);
+                    canvas.FontColor = Colors.White;
+                    canvas.FontSize = 18;
+                    canvas.Font = Font.Default;
+                    canvas.DrawString(snake.name, (int)segmentX, (int)segmentY, 100, 100, HorizontalAlignment.Left, VerticalAlignment.Top);
                 }
-
-
-
             }
-        }
-      
+        } 
     }
-
 }

@@ -90,7 +90,6 @@ namespace GameController
                 // build a list of messages to send to the view
                 
                 newMessages.Add(p);
-
                 if (world is null && newMessages.Count == 2)
                 {
                     Int32.TryParse(newMessages.ElementAt<string>(1), out int worldSize);
@@ -107,19 +106,20 @@ namespace GameController
                 }
 
                 JsonDocument doc = JsonDocument.Parse(p);
-                if (doc.RootElement.TryGetProperty("wall", out _))
+                if (doc.RootElement.TryGetProperty("snake", out _))
+                {
+                    Snake? player = JsonSerializer.Deserialize<Snake>(doc);
+                    this.world.Snakes[player.snake] = player;
+                    //Console.WriteLine(player.body[0].GetX() + " " + player.body[0].GetY());
+                }
+                else if (doc.RootElement.TryGetProperty("wall", out _))
                 {
                     Wall? wall = JsonSerializer.Deserialize<Wall>(doc);
                     world.Walls[wall.wall] = wall;
-                }
-                else if (doc.RootElement.TryGetProperty("snake", out _))
-                { 
-                    Snake? player = JsonSerializer.Deserialize<Snake>(doc);
-                    this.world.Snakes[player.snake] = player;
-                    Console.WriteLine(p);
+                    //Console.WriteLine(p);
                 }
 
-                else if (doc.RootElement.TryGetProperty("power", out _))
+                if (doc.RootElement.TryGetProperty("power", out _))
                 {
                     PowerUp? powerUp = JsonSerializer.Deserialize<PowerUp>(doc);
                     this.world.PowerUps[powerUp.power] = powerUp;
@@ -135,7 +135,9 @@ namespace GameController
 
         public void SendCommand(string dir)
         {
-            Networking.Send(server.TheSocket, "{\"moving\": \"" + dir + "\"}");
+            string item = "{\"moving\":\"" + dir + "\"}\n";
+            Networking.Send(server.TheSocket, item);
+            //Console.WriteLine(item);
         }
     }
 }
