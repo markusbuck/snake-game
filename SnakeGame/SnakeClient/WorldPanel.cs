@@ -97,9 +97,9 @@ public class WorldPanel : ScrollView,IDrawable
     private void PowerupDrawer(object o, ICanvas canvas)
     {
         PowerUp p = o as PowerUp;
-        int width = 10;
+        int width = 16;
 
-        canvas.FillColor = Colors.Orange;
+        canvas.FillColor = Colors.Red;
 
         // Ellipses are drawn starting from the top-left corner.
         // So if we want the circle centered on the powerup's location, we have to offset it
@@ -108,32 +108,16 @@ public class WorldPanel : ScrollView,IDrawable
 
     }
 
-    /// <summary>
-    /// A method that can be used as an ObjectDrawer delegate
-    /// </summary>
-    /// <param name="o">The player to draw</param>
-    /// <param name="canvas"></param>
-    //private void PlayerDrawer(object o, ICanvas canvas)
-    //{
-    //    Snake p = o as Snake;
-    //    // pick which image to use based on the player's ID
-    //    IImage snake = p.snake % 2 == 0 ? ship1 : ship2;
-    //    // scale the ships down a bit
-    //    float w = snake.Width * 0.4f;
-    //    float h = snake.Height * 0.4f;
-
-    //    // Images are drawn starting from the top-left corner.
-    //    // So if we want the image centered on the player's location, we have to offset it
-    //    // by half its size to the left (-width/2) and up (-height/2)
-    //    canvas.DrawImage(p, -w / 2, -h / 2, w, h);
-    //}
-
     private void SnakeSegmentDrawer(object o, ICanvas canvas)
     {
-        int snakeSegmentLength = (int) o;
-        canvas.StrokeSize = 4;
+        //int snakeSegmentLength = (int)o;
+        //canvas.StrokeSize = 4;
+        //canvas.StrokeColor = Colors.Red;
+        //canvas.DrawLine(0, 0, 0, -snakeSegmentLength);
+
         canvas.StrokeColor = Colors.Red;
-        canvas.DrawLine(0, 0, 0, -snakeSegmentLength);
+        canvas.StrokeSize = 10;
+        canvas.DrawLine(0, 0, 0, -100);
     }
 
     private void WallDrawer(object o, ICanvas canvas)
@@ -141,9 +125,8 @@ public class WorldPanel : ScrollView,IDrawable
         Wall wall = o as Wall;
         int width = 50;
 
-        canvas.DrawImage(background, (float) -wall.p1.GetX() / 2, (float) -wall.p1.GetY() / 2, width, 50);
 
-
+        canvas.DrawImage(this.wall, (float) -wall.p1.GetX() / 2, (float) -wall.p1.GetY() / 2, width, 50);
     }
 
 
@@ -174,25 +157,34 @@ public class WorldPanel : ScrollView,IDrawable
 
                 foreach (var powerup in theWorld.PowerUps.Values)
                 {
-
-                    DrawObjectWithTransform(canvas, powerup, powerup.loc.X, powerup.loc.Y, powerup.loc.ToAngle(), PowerupDrawer);
+                    DrawObjectWithTransform(canvas, powerup, powerup.loc.X, powerup.loc.Y, 0, PowerupDrawer);
                 }
 
                 foreach (var wall in theWorld.Walls.Values)
                 {
-                    DrawObjectWithTransform(canvas, wall, wall.p1.X, wall.p1.Y, wall.loc.ToAngle(), PowerupDrawer);
+                    DrawObjectWithTransform(canvas, wall, wall.p1.X, wall.p1.Y, 0, WallDrawer);
                 }
 
                 foreach (var snake in theWorld.Snakes.Values)
                 {
-                    foreach(var bodyPart in snake.body)
+                    double segnmentLength = 0;
+                    double segmentDirection = 0;
+
+                    foreach (var bodyPart in snake.body)
                     {
-                        bodyPart.Normalize();
-                        DrawObjectWithTransform(canvas, bodyPart.Length(), bodyPart.GetX(), bodyPart.GetY(), bodyPart.ToAngle(), SnakeSegmentDrawer);
+                        //bodyPart.Normalize();
+                        segnmentLength += bodyPart.Length();
+                        segmentDirection += bodyPart.ToAngle();
                     }
+
+                    float angle = Vector2D.AngleBetweenPoints(snake.body[0], snake.body[1]);
+                    double segmentX = snake.body[0].GetX();
+                    double segmentY = snake.body[0].GetY();
+
+                    DrawObjectWithTransform(canvas, segnmentLength, segmentX, segmentY, angle, SnakeSegmentDrawer);
                 }
 
-                
+
 
             }
         }
