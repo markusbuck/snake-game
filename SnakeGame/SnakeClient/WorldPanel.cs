@@ -110,21 +110,17 @@ public class WorldPanel : ScrollView,IDrawable
 
     private void SnakeSegmentDrawer(object o, ICanvas canvas)
     {
-        //int snakeSegmentLength = (int)o;
-        //canvas.StrokeSize = 4;
-        //canvas.StrokeColor = Colors.Red;
-        //canvas.DrawLine(0, 0, 0, -snakeSegmentLength);
-
+        int segmentLength = Convert.ToInt32(o);
         canvas.StrokeColor = Colors.Red;
         canvas.StrokeSize = 10;
-        canvas.DrawLine(0, 0, 0, -100);
+        canvas.DrawLine(0, 0, 0, -segmentLength);
     }
 
     private void WallDrawer(object o, ICanvas canvas)
     {
         Wall wall = o as Wall;
+        
         int width = 50;
-
 
         canvas.DrawImage(this.wall, (float) -wall.p1.GetX() / 2, (float) -wall.p1.GetY() / 2, width, 50);
     }
@@ -172,9 +168,10 @@ public class WorldPanel : ScrollView,IDrawable
 
                     foreach (var bodyPart in snake.body)
                     {
-                        //bodyPart.Normalize();
+                        Vector2D vector = new Vector2D(bodyPart.GetX(), bodyPart.GetY());
+                        vector.Normalize();
                         segnmentLength += bodyPart.Length();
-                        segmentDirection += bodyPart.ToAngle();
+                        segmentDirection += vector.ToAngle();
                     }
 
                     float angle = Vector2D.AngleBetweenPoints(snake.body[0], snake.body[1]);
