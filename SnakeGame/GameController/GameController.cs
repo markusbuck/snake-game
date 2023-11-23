@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Model;
 using NetworkUtil;
+using SnakeGame;
 namespace GameController
 {
     public class GameController
@@ -110,7 +111,12 @@ namespace GameController
                 {
                     Snake? player = JsonSerializer.Deserialize<Snake>(doc);
                     this.world.Snakes[player.snake] = player;
-                    //Console.WriteLine(player.body[0].GetX() + " " + player.body[0].GetY());
+
+                    Console.WriteLine("Snake");
+                    foreach(Vector2D vector in player.body)
+                    {
+                        Console.WriteLine(vector.ToString());
+                    }
                 }
                 else if (doc.RootElement.TryGetProperty("wall", out _))
                 {

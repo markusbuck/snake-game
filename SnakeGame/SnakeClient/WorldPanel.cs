@@ -113,6 +113,7 @@ public class WorldPanel : ScrollView,IDrawable
         int segmentLength = Convert.ToInt32(o);
         canvas.StrokeColor = Colors.Red;
         canvas.StrokeSize = 10;
+        //canvas.DrawLine(0, 0, 0, -segmentLength);
         canvas.DrawLine(0, 0, 0, -segmentLength);
 
         //canvas.FontColor = Colors.White;
@@ -177,8 +178,8 @@ public class WorldPanel : ScrollView,IDrawable
             if (theWorld != null)
             {
 
-                float playerX = (float)theWorld.Snakes[theWorld.CurrentSnake].body[1].GetX();
-                float playerY = (float)theWorld.Snakes[theWorld.CurrentSnake].body[1].GetY();
+                float playerX = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetX();
+                float playerY = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetY();
                 canvas.Translate(-playerX + (viewSize / 2), -playerY + (viewSize / 2));
 
 
@@ -197,44 +198,61 @@ public class WorldPanel : ScrollView,IDrawable
 
                 foreach (var snake in theWorld.Snakes.Values)
                 {
-                    double segmentLength = 0;
-                    double segmentDirection = 0;
 
-                    Vector2D head = snake.body[1];
-                    Vector2D tail = snake.body[0];
-
-                    if (snake.dir.GetX() != 0.0)
+                    for (int i = 0; i < snake.body.Count -1; i++)
                     {
-                        segmentLength = Math.Abs(head.GetX() - tail.GetX());
+                        Vector2D p1 = snake.body[i + 1]; // tail
+                        Vector2D p2 = snake.body[i];     // tip
+                        Vector2D direction = snake.dir;
+                        double segmentLengthX = Math.Abs(p2.GetX() - p1.GetX());
+                        double segmentLengthY = Math.Abs(p2.GetY() - p1.GetY());
 
-                        if(snake.dir.GetX() > 0)
+                        if (segmentLengthX > segmentLengthY)
                         {
-                            segmentDirection = -90;
+                            double rotation = (direction.GetX() > 0) ? -90 : 90;
+                            DrawObjectWithTransform(canvas, segmentLengthX, p1.GetX(), p1.GetY(), rotation, SnakeSegmentDrawer);
                         }
-
                         else
                         {
-                            segmentDirection = 90;
+                            double rotation = (direction.GetY() > 0) ? 0 : -180;
+                            DrawObjectWithTransform(canvas, segmentLengthY, p1.GetX(), p1.GetY(), rotation, SnakeSegmentDrawer);
 
                         }
                     }
 
-                    else
-                    {
-                        segmentLength = Math.Abs(head.GetY() - tail.GetY());
+                    //double segmentLength = 0;
+                    //double segmentDirection = 0;
 
-                        if (snake.dir.GetY() > 0)
-                        {
-                            segmentDirection = 0;
-                        }
+                    //Vector2D head = snake.body[1];
+                    //Vector2D tail = snake.body[0];
 
-                        else
-                        {
-                            segmentDirection = -180;
+                    //if (snake.dir.GetX() != 0.0)
+                    //{
+                    //    segmentLength = Math.Abs(head.GetX() - tail.GetX());
 
-                        }
+                    //    if(snake.dir.GetX() > 0)
+                    //    {
+                    //        segmentDirection = -90;
+                    //    }
+                    //    else
+                    //    {
+                    //        segmentDirection = 90;
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    segmentLength = Math.Abs(head.GetY() - tail.GetY());
 
-                    }
+                    //    if (snake.dir.GetY() > 0)
+                    //    {
+                    //        segmentDirection = 0;
+                    //    }
+                    //    else
+                    //    {
+                    //        segmentDirection = -180;
+                    //    }
+
+                    //}
 
 
                     //foreach (var bodyPart in snake.body)
@@ -250,11 +268,11 @@ public class WorldPanel : ScrollView,IDrawable
                     double segmentY = snake.body[1].GetY();
                     //Console.WriteLine( "WorldPanel: " + segmentX + " " + segmentY);
 
-                    DrawObjectWithTransform(canvas, segmentLength, segmentX, segmentY, segmentDirection, SnakeSegmentDrawer);
+                    //DrawObjectWithTransform(canvas, segmentLength, segmentX, segmentY, segmentDirection, SnakeSegmentDrawer);
                     canvas.FontColor = Colors.White;
                     canvas.FontSize = 18;
                     canvas.Font = Font.Default;
-                    canvas.DrawString(snake.name, (int)segmentX, (int)segmentY, 100, 100, HorizontalAlignment.Left, VerticalAlignment.Top);
+                    canvas.DrawString(snake.name + ": " + snake.score, (int)segmentX, (int)segmentY, 100, 100, HorizontalAlignment.Left, VerticalAlignment.Top);
                 }
             }
         } 

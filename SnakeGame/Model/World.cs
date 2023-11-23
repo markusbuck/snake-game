@@ -22,7 +22,7 @@ namespace Model
             this.CurrentSnake = currentSnake;
 		}
 
-        private void UpdateCameFromServer(IEnumerable<Snake> players, IEnumerable<PowerUp> powerups)
+        public void UpdateCameFromServer(IEnumerable<Snake> players, IEnumerable<PowerUp> powerups)
         {
             //Random r = new Random(); // ignore this for now
 
