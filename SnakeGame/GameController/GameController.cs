@@ -106,30 +106,35 @@ namespace GameController
                     continue;
                 }
 
-                JsonDocument doc = JsonDocument.Parse(p);
-                if (doc.RootElement.TryGetProperty("snake", out _))
+                lock (world)
                 {
-                    Snake? player = JsonSerializer.Deserialize<Snake>(doc);
-                    this.world.Snakes[player.snake] = player;
 
-                    Console.WriteLine("Snake");
-                    foreach(Vector2D vector in player.body)
+                    JsonDocument doc = JsonDocument.Parse(p);
+                    if (doc.RootElement.TryGetProperty("snake", out _))
                     {
-                        Console.WriteLine(vector.ToString());
+                        Snake? player = JsonSerializer.Deserialize<Snake>(doc);
+                        this.world.Snakes[player.snake] = player;
+
+                        Console.WriteLine("Snake");
+                        foreach (Vector2D vector in player.body)
+                        {
+                            Console.WriteLine(vector.ToString());
+                        }
+                    }
+                    else if (doc.RootElement.TryGetProperty("wall", out _))
+                    {
+                        Wall? wall = JsonSerializer.Deserialize<Wall>(doc);
+                        world.Walls[wall.wall] = wall;
+                        //Console.WriteLine(p);
+                    }
+
+                    if (doc.RootElement.TryGetProperty("power", out _))
+                    {
+                        PowerUp? powerUp = JsonSerializer.Deserialize<PowerUp>(doc);
+                        this.world.PowerUps[powerUp.power] = powerUp;
                     }
                 }
-                else if (doc.RootElement.TryGetProperty("wall", out _))
-                {
-                    Wall? wall = JsonSerializer.Deserialize<Wall>(doc);
-                    world.Walls[wall.wall] = wall;
-                    //Console.WriteLine(p);
-                }
 
-                if (doc.RootElement.TryGetProperty("power", out _))
-                {
-                    PowerUp? powerUp = JsonSerializer.Deserialize<PowerUp>(doc);
-                    this.world.PowerUps[powerUp.power] = powerUp;
-                }
 
                 // Then remove it from the SocketState's growable buffer
                 state.RemoveData(0, p.Length);

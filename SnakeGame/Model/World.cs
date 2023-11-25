@@ -29,26 +29,25 @@ namespace Model
             // The server is not required to send updates about every object,
             // so we update our local copy of the world only for the objects that
             // the server gave us an update for.
-            foreach (Snake play in players)
+            lock (this)
             {
-                //while (r.Next() % 1000 != 0) ; // ignore this loop for now
-                if (!play.alive) 
-                    Snakes.Remove(play.snake);
-                else
-                    Snakes[play.snake] = play;
-            }
+                foreach (Snake play in players)
+                {
+                    //while (r.Next() % 1000 != 0) ; // ignore this loop for now
+                    if (!play.alive)
+                        Snakes.Remove(play.snake);
+                    else
+                        Snakes[play.snake] = play;
+                }
 
-            foreach (PowerUp pow in powerups)
-            {
-                if (pow.died)
-                    PowerUps.Remove(pow.power);
-                else
-                    PowerUps[pow.power] = pow;
+                foreach (PowerUp pow in powerups)
+                {
+                    if (pow.died)
+                        PowerUps.Remove(pow.power);
+                    else
+                        PowerUps[pow.power] = pow;
+                }
             }
-            // Notify any listeners (the view) that a new game world has arrived from the server
-            //UpdateArrived?.Invoke();
-
-            // TODO: for whatever user inputs happened during the last frame, process them.
         }
     }
 }
