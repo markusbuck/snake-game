@@ -182,8 +182,8 @@ public class WorldPanel : ScrollView,IDrawable
             {
                 if (theWorld.Snakes.ContainsKey(theWorld.CurrentSnake) && theWorld.Snakes[theWorld.CurrentSnake].alive)
                 {
-                    this.playerX = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetX();
-                    this.playerY = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetY();
+                    this.playerX = (float)theWorld.Snakes[theWorld.CurrentSnake].body.Last().GetX();
+                    this.playerY = (float)theWorld.Snakes[theWorld.CurrentSnake].body.Last().GetY();
                 }
                 canvas.Translate(-playerX + (viewSize / 2), -playerY + (viewSize / 2));
 
