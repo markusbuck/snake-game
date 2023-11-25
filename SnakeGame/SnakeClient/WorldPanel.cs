@@ -116,8 +116,7 @@ public class WorldPanel : ScrollView,IDrawable
     private void SnakeSegmentDrawer(object o, ICanvas canvas)
     {
         int segmentLength = Convert.ToInt32(o);
-        canvas.StrokeColor = Colors.Blue;
-        canvas.FillColor = Colors.Blue;
+        
         canvas.StrokeSize = 10;
         canvas.FillEllipse(-5, -5, 10, 10);
         canvas.DrawLine(0, 0, 0, -segmentLength);
@@ -194,7 +193,44 @@ public class WorldPanel : ScrollView,IDrawable
 
                 foreach (var snake in theWorld.Snakes.Values)
                 {
-
+                    int color = snake.snake % 8;
+             
+                    switch (color)
+                    {
+                        case 0:
+                            canvas.StrokeColor = Colors.Blue;
+                            canvas.FillColor = Colors.Blue;
+                            break;
+                        case 1:
+                            canvas.StrokeColor = Colors.Red;
+                            canvas.FillColor = Colors.Red;
+                            break;
+                        case 2:
+                            canvas.StrokeColor = Colors.DarkGreen;
+                            canvas.FillColor = Colors.DarkGreen;
+                            break;
+                        case 3:
+                            canvas.StrokeColor = Colors.Purple;
+                            canvas.FillColor = Colors.Purple;
+                            break;
+                        case 4:
+                            canvas.StrokeColor = Colors.Pink;
+                            canvas.FillColor = Colors.Pink;
+                            break;
+                        case 5:
+                            canvas.StrokeColor = Colors.Orange;
+                            canvas.FillColor = Colors.Orange;
+                            break;
+                        case 6:
+                            canvas.StrokeColor = Colors.Brown;
+                            canvas.FillColor = Colors.Brown;
+                            break;
+                        case 7:
+                            canvas.StrokeColor = Colors.LightGrey;
+                            canvas.FillColor = Colors.LightGrey;
+                            break;
+                    }
+                 
                     for (int i = 0; i < snake.body.Count - 1; i++)
                     {
                         Vector2D p1 = snake.body[i]; // tail
