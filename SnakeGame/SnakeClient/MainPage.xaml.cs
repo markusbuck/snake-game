@@ -108,7 +108,7 @@ public partial class MainPage : ContentPage
     public void OnFrame()
     {
         worldPanel.SetWorld(gameController.world);
-        //gameController.world.UpdateCameFromServer(gameController.world.Snakes.Values, gameController.world.PowerUps.Values);
+        gameController.world.UpdateCameFromServer(gameController.world.Snakes.Values, gameController.world.PowerUps.Values);
         Dispatcher.Dispatch(() => graphicsView.Invalidate());
     }
 

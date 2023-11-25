@@ -27,6 +27,9 @@ public class WorldPanel : ScrollView,IDrawable
     private IImage wall;
     private IImage background;
     private int viewSize = 900;
+    private float playerX;
+    private float playerY;
+
 
     private bool initializedForDrawing = false;
 
@@ -177,11 +180,12 @@ public class WorldPanel : ScrollView,IDrawable
         {
             if (theWorld != null)
             {
-
-                float playerX = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetX();
-                float playerY = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetY();
+                if (theWorld.Snakes.ContainsKey(theWorld.CurrentSnake) && theWorld.Snakes[theWorld.CurrentSnake].alive)
+                {
+                    this.playerX = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetX();
+                    this.playerY = (float)theWorld.Snakes[theWorld.CurrentSnake].body[0].GetY();
+                }
                 canvas.Translate(-playerX + (viewSize / 2), -playerY + (viewSize / 2));
-
 
                 canvas.DrawImage(background, (-theWorld.Size / 2), (-theWorld.Size / 2), theWorld.Size,
                   theWorld.Size);

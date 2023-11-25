@@ -32,7 +32,7 @@ namespace Model
             foreach (Snake play in players)
             {
                 //while (r.Next() % 1000 != 0) ; // ignore this loop for now
-                if (!play.alive)
+                if (!play.alive) 
                     Snakes.Remove(play.snake);
                 else
                     Snakes[play.snake] = play;
