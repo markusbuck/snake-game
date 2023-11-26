@@ -193,6 +193,10 @@ public class WorldPanel : ScrollView,IDrawable
 
                 foreach (var snake in theWorld.Snakes.Values)
                 {
+                    if(snake == null || !snake.alive)
+                    {
+                        continue;
+                    }
                     int color = snake.snake % 8;
              
                     switch (color)
