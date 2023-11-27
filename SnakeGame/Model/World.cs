@@ -1,7 +1,6 @@
 ﻿//Authors: Kevin Soto-Miranda 2023, Markus Buckwalter 2023.
 
 using System;
-using SnakeGame;
 
 namespace Model
 {
