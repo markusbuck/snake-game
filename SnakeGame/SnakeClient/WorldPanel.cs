@@ -26,6 +26,8 @@ public class WorldPanel : ScrollView,IDrawable
     private World theWorld;
     private IImage wall;
     private IImage background;
+    private IImage snakeEyes;
+    private IImage background2;
     private int viewSize = 900;
     private float playerX;
     private float playerY;
@@ -67,6 +69,9 @@ public class WorldPanel : ScrollView,IDrawable
     {
         wall = loadImage( "wallsprite.png" );
         background = loadImage( "background.png" );
+        snakeEyes = loadImage( "snakeeyes.png"  );
+        background2 = loadImage("background2.png");
+
         initializedForDrawing = true;
     }
 
@@ -111,6 +116,11 @@ public class WorldPanel : ScrollView,IDrawable
         canvas.DrawEllipse(-(width / 2), -(width / 2), width, width);
         canvas.FillEllipse(-(width / 2), -(width / 2), width, width);
 
+    }
+    private void SnakeEyeDrawer(object o, ICanvas canvas)
+    {
+        int width = 16;
+        canvas.DrawImage(snakeEyes, -width / 2, -width/8, width, width);
     }
 
     private void SnakeSegmentDrawer(object o, ICanvas canvas)
@@ -178,7 +188,7 @@ public class WorldPanel : ScrollView,IDrawable
                 }
                 canvas.Translate(-playerX + (viewSize / 2), -playerY + (viewSize / 2));
 
-                canvas.DrawImage(background, (-theWorld.Size / 2), (-theWorld.Size / 2), theWorld.Size,
+                canvas.DrawImage(background2, (-theWorld.Size / 2), (-theWorld.Size / 2), theWorld.Size,
                   theWorld.Size);
 
                 foreach (var powerup in theWorld.PowerUps.Values)
@@ -245,6 +255,10 @@ public class WorldPanel : ScrollView,IDrawable
                         Vector2D segmentRotation = (p2 - p1);
                         segmentRotation.Normalize();
                         DrawObjectWithTransform(canvas, segmentLength, p1.GetX(), p1.GetY(), segmentRotation.ToAngle(), SnakeSegmentDrawer);
+                        if(i + 1== snake.body.Count - 1)
+                        {
+                            DrawObjectWithTransform(canvas, p2, p2.GetX(), p2.GetY(), direction.ToAngle(), SnakeEyeDrawer);
+                        }
                     }
                     double segmentX = snake.body.Last().GetX();
                     double segmentY = snake.body.Last().GetY();
