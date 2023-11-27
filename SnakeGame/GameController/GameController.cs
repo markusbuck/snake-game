@@ -10,7 +10,7 @@ using SnakeGame;
 namespace GameController
 {
     /// <summary>
-    /// 
+    /// A class representing the Controller in the MVC structure.
     /// </summary>
     public class GameController
     {
