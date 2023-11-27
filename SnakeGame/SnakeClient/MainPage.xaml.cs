@@ -1,4 +1,6 @@
-﻿using GameController;
+﻿// Authors: Kevin Soto 2023, Markus Buckwalter 2023
+
+using GameController;
 namespace SnakeGame;
 
 public partial class MainPage : ContentPage

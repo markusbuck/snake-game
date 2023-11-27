@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Authors: Kevin Soto-Miranda 2023, Markus Buckwalter 2023.
+
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using Model;
@@ -18,9 +20,12 @@ using SizeF = Microsoft.Maui.Graphics.SizeF;
 
 
 namespace SnakeGame;
+/// <summary>
+/// A class to represent the world panel in the snake game that
+/// draws the background, snakes, powerups, and walls.
+/// </summary>
 public class WorldPanel : ScrollView,IDrawable
 {
-
     public delegate void ObjectDrawer(object o, ICanvas canvas);
     private GraphicsView graphicsView = new();
     private World theWorld;
@@ -31,8 +36,6 @@ public class WorldPanel : ScrollView,IDrawable
     private int viewSize = 900;
     private float playerX;
     private float playerY;
-
-
     private bool initializedForDrawing = false;
 
     private IImage loadImage(string name)
@@ -49,6 +52,10 @@ public class WorldPanel : ScrollView,IDrawable
         }
     }
 
+    /// <summary>
+    /// A default constructor that will set the background color of the game to black,
+    /// and will create a window with a size of 2000x2000.
+    /// </summary>
     public WorldPanel()
     {
         BackgroundColor = Colors.Black; 
@@ -59,11 +66,14 @@ public class WorldPanel : ScrollView,IDrawable
         this.Content = graphicsView;
     }
 
+    /// <summary>
+    /// A method to set the world for the WorldPanel.
+    /// </summary>
+    /// <param name="w">A world to set the world.</param>
     public void SetWorld(World w)
     {
         theWorld = w;
     }
-
 
     private void InitializeDrawing()
     {
@@ -101,7 +111,7 @@ public class WorldPanel : ScrollView,IDrawable
     /// A method that can be used as an ObjectDrawer delegate
     /// </summary>
     /// <param name="o">The powerup to draw</param>
-    /// <param name="canvas"></param>
+    /// <param name="canvas"><The canvas object for drawing onto./param>
     private void PowerupDrawer(object o, ICanvas canvas)
     {
         PowerUp p = o as PowerUp;
@@ -117,12 +127,23 @@ public class WorldPanel : ScrollView,IDrawable
         canvas.FillEllipse(-(width / 2), -(width / 2), width, width);
 
     }
+
+    /// <summary>
+    /// This method draws snake eyes on the player snake.
+    /// </summary>
+    /// <param name="o">The snake eyes to draw.</param>
+    /// <param name="canvas">The canvas object for drawing onto.</param>
     private void SnakeEyeDrawer(object o, ICanvas canvas)
     {
         int width = 16;
         canvas.DrawImage(snakeEyes, -width / 2, -width/8, width, width);
     }
 
+    /// <summary>
+    /// This method draws the different segments of the snake.
+    /// </summary>
+    /// <param name="o">The snake segments to draw.</param>
+    /// <param name="canvas">The canvas object for drawing onto.</param>
     private void SnakeSegmentDrawer(object o, ICanvas canvas)
     {
         int segmentLength = Convert.ToInt32(o);
@@ -133,6 +154,11 @@ public class WorldPanel : ScrollView,IDrawable
         canvas.FillEllipse(-5, -5 + -segmentLength, 10, 10);
     }
 
+    /// <summary>
+    /// This method draws the walls in the world.
+    /// </summary>
+    /// <param name="o">The wall to draw.</param>
+    /// <param name="canvas">The canvas object for drawing onto.</param>
     private void WallDrawer(object o, ICanvas canvas)
     {
         Wall wall = o as Wall;
@@ -248,7 +274,7 @@ public class WorldPanel : ScrollView,IDrawable
                     for (int i = 0; i < snake.body.Count - 1; i++)
                     {
                         Vector2D p1 = snake.body[i]; // tail
-                        Vector2D p2 = snake.body[i + 1];     // tip
+                        Vector2D p2 = snake.body[i + 1]; // tip
                         Vector2D direction = snake.dir;
 
                         double segmentLength = (p2 - p1).Length();

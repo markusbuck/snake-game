@@ -1,20 +1,29 @@
-﻿using System;
+﻿//Authors: Kevin Soto-Miranda 2023, Markus Buckwalter 2023.
+
+using System;
 using SnakeGame;
 
 namespace Model
 {
+    /// <summary>
+    /// A class to represent the world in the snake game.
+    /// </summary>
 	public class World
 	{
 		public Dictionary<int, Snake> Snakes;
 		public Dictionary<int, PowerUp> PowerUps;
 		public Dictionary<int, Wall> Walls;
-		public int Size
-		{ get; private set; }
+		public int Size { get; private set; }
         public int CurrentSnake { get; private set; }
 
+        /// <summary>
+        /// A constructor to create a world with a given size, and the ID of
+        /// a snake in the world.
+        /// </summary>
+        /// <param name="_size">The size of a world.</param>
+        /// <param name="currentSnake">The ID of a snake.</param>
 		public World(int _size, int currentSnake)
 		{
-
 			Snakes = new Dictionary<int, Snake>();
 			PowerUps = new Dictionary<int, PowerUp>();
 			Walls = new Dictionary<int, Wall>();
@@ -22,18 +31,18 @@ namespace Model
             this.CurrentSnake = currentSnake;
 		}
 
+        /// <summary>
+        /// This method is called to check if the players and powerups in the world are alive, if not
+        /// they will be removed from the world.
+        /// </summary>
+        /// <param name="players">A list of the players in the world.</param>
+        /// <param name="powerups"A list of powerups in the world.</param>
         public void UpdateCameFromServer(IEnumerable<Snake> players, IEnumerable<PowerUp> powerups)
         {
-            //Random r = new Random(); // ignore this for now
-
-            // The server is not required to send updates about every object,
-            // so we update our local copy of the world only for the objects that
-            // the server gave us an update for.
             lock (this)
             {
                 foreach (Snake play in players)
                 {
-                    //while (r.Next() % 1000 != 0) ; // ignore this loop for now
                     if (!play.alive)
                         Snakes.Remove(play.snake);
                     else
