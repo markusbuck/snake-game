@@ -29,7 +29,8 @@ namespace GameController
         public void StartSend(string playerID)
         {
             playerID += "\n";
-            Networking.Send(server.TheSocket, playerID );
+            if (server != null)
+                Networking.Send(server.TheSocket, playerID);
         }
 
         /// <summary>
@@ -58,7 +59,7 @@ namespace GameController
             Connected?.Invoke();
 
             state.OnNetworkAction = ReceiveMessage;
-            
+
             Networking.GetData(state);
         }
 
@@ -127,26 +128,30 @@ namespace GameController
                     continue;
                 }
 
-                lock (world)
-                {
-                    JsonDocument doc = JsonDocument.Parse(p);
-                    if (doc.RootElement.TryGetProperty("snake", out _))
+                if (world != null)
+                    lock (world)
                     {
-                        Snake? player = JsonSerializer.Deserialize<Snake>(doc);
-                        this.world.Snakes[player.snake] = player;
-                    }
-                    else if (doc.RootElement.TryGetProperty("wall", out _))
-                    {
-                        Wall? wall = JsonSerializer.Deserialize<Wall>(doc);
-                        world.Walls[wall.wall] = wall;
-                    }
+                        JsonDocument doc = JsonDocument.Parse(p);
+                        if (doc.RootElement.TryGetProperty("snake", out _))
+                        {
+                            Snake? player = JsonSerializer.Deserialize<Snake>(doc);
+                            if (player != null)
+                                this.world.Snakes[player.snake] = player;
+                        }
+                        else if (doc.RootElement.TryGetProperty("wall", out _))
+                        {
+                            Wall? wall = JsonSerializer.Deserialize<Wall>(doc);
+                            if (wall != null)
+                                world.Walls[wall.wall] = wall;
+                        }
 
-                    if (doc.RootElement.TryGetProperty("power", out _))
-                    {
-                        PowerUp? powerUp = JsonSerializer.Deserialize<PowerUp>(doc);
-                        this.world.PowerUps[powerUp.power] = powerUp;
+                        if (doc.RootElement.TryGetProperty("power", out _))
+                        {
+                            PowerUp? powerUp = JsonSerializer.Deserialize<PowerUp>(doc);
+                            if (powerUp != null)
+                                this.world.PowerUps[powerUp.power] = powerUp;
+                        }
                     }
-                }
 
                 // Then remove it from the SocketState's growable buffer
                 state.RemoveData(0, p.Length);
@@ -164,7 +169,8 @@ namespace GameController
         public void SendCommand(string dir)
         {
             string item = "{\"moving\":\"" + dir + "\"}\n";
-            Networking.Send(server.TheSocket, item);
+            if (server != null)
+                Networking.Send(server.TheSocket, item);
         }
     }
 }
