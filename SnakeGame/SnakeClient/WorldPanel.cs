@@ -205,8 +205,10 @@ public class WorldPanel : ScrollView,IDrawable
 
         lock(theWorld)
         {
+            // Draws the world when it is not null
             if (theWorld != null)
             {
+                // Gets the coordinates of the current snake
                 if (theWorld.Snakes.ContainsKey(theWorld.CurrentSnake) && theWorld.Snakes[theWorld.CurrentSnake].alive)
                 {
                     this.playerX = (float)theWorld.Snakes[theWorld.CurrentSnake].body.Last().GetX();
@@ -217,24 +219,29 @@ public class WorldPanel : ScrollView,IDrawable
                 canvas.DrawImage(background2, (-theWorld.Size / 2), (-theWorld.Size / 2), theWorld.Size,
                   theWorld.Size);
 
+                // Draws the powerups sent from the server
                 foreach (var powerup in theWorld.PowerUps.Values)
                 {
                     DrawObjectWithTransform(canvas, powerup, powerup.loc.X, powerup.loc.Y, 0, PowerupDrawer);
                 }
 
+                //Draws the walls sent by the server
                 foreach (var wall in theWorld.Walls.Values)
                 {
                     DrawObjectWithTransform(canvas, wall, 0, 0, 0, WallDrawer);
                 }
 
+                // Draws the snakes sent by the server
                 foreach (var snake in theWorld.Snakes.Values)
                 {
+                    // Skips drawing if the snake is dead or no longer exists
                     if(snake == null || !snake.alive)
                     {
                         continue;
                     }
+
+                    // Gets the specific color for the snake, 8 different colors possible
                     int color = snake.snake % 8;
-             
                     switch (color)
                     {
                         case 0:
@@ -270,7 +277,9 @@ public class WorldPanel : ScrollView,IDrawable
                             canvas.FillColor = Colors.LightGrey;
                             break;
                     }
-                 
+
+                    // Calculates the direction and length of the individual segments of the snake
+                    // and then draws them.
                     for (int i = 0; i < snake.body.Count - 1; i++)
                     {
                         Vector2D p1 = snake.body[i]; // tail
@@ -286,6 +295,8 @@ public class WorldPanel : ScrollView,IDrawable
                             DrawObjectWithTransform(canvas, p2, p2.GetX(), p2.GetY(), direction.ToAngle(), SnakeEyeDrawer);
                         }
                     }
+
+                    // Draws the player name and score
                     double segmentX = snake.body.Last().GetX();
                     double segmentY = snake.body.Last().GetY();
                     

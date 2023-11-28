@@ -113,16 +113,19 @@ namespace GameController
                 // build a list of messages to send to the view                
                 newMessages.Add(p);
 
+                // Gets the World Size and the Player ID and creates a new world
                 if (world is null && newMessages.Count == 2)
                 {
-                    Int32.TryParse(newMessages.ElementAt<string>(1), out int worldSize);
+                    Int32.TryParse(newMessages.ElementAt<string>(1),
+                        out int worldSize);
                     Int32.TryParse(newMessages.ElementAt(0), out int snakeID);
                     this.world = new World(worldSize, snakeID);
                     state.RemoveData(0, p.Length);
                     continue;
                 }
 
-                if (Int32.TryParse(p, out int worldSizez))
+                // Removes the ID sent by the server
+                if (Int32.TryParse(p, out int playerNum))
                 {
                     state.RemoveData(0, p.Length);
                     continue;
@@ -131,13 +134,18 @@ namespace GameController
                 if (world != null)
                     lock (world)
                     {
+                        // // checks if the json string is a snake
                         JsonDocument doc = JsonDocument.Parse(p);
+
+                        // for a snake object
                         if (doc.RootElement.TryGetProperty("snake", out _))
                         {
                             Snake? player = JsonSerializer.Deserialize<Snake>(doc);
                             if (player != null)
                                 this.world.Snakes[player.snake] = player;
                         }
+
+                        // checks if the json string is a wall
                         else if (doc.RootElement.TryGetProperty("wall", out _))
                         {
                             Wall? wall = JsonSerializer.Deserialize<Wall>(doc);
@@ -145,6 +153,7 @@ namespace GameController
                                 world.Walls[wall.wall] = wall;
                         }
 
+                        // checks if the json string is a powerup
                         if (doc.RootElement.TryGetProperty("power", out _))
                         {
                             PowerUp? powerUp = JsonSerializer.Deserialize<PowerUp>(doc);
