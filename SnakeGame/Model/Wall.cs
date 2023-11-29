@@ -3,18 +3,26 @@
 using System;
 using SnakeGame;
 using System.Text.Json.Serialization;
+using System.Xml.Serialization;
+
 namespace Model
 {
-	/// <summary>
-	/// This class represents a wall in the snake game.
-	/// </summary>
-	public class Wall
+    /// <summary>
+    /// This class represents a wall in the snake game.
+    /// </summary>
+  
+    public class Wall
 	{
 		// Property for the wall ID
+		[XmlElement("ID")]
 		public int wall { get; set; }
-		// Property for the location of the wall in the game
-		public Vector2D p1 { get; set; }
+
         // Property for the location of the wall in the game
+        [XmlElement("p1")]
+		public Vector2D p1 { get; set; }
+
+        // Property for the location of the wall in the game
+        [XmlElement("p2")]
         public Vector2D p2 { get; set; }
 
         /// <summary>

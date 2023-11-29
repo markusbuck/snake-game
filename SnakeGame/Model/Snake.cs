@@ -48,6 +48,8 @@ namespace Model
 			this.dc = dc;
 			this.join = join;
 		}
+
+
 	}
 }
 

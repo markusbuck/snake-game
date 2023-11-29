@@ -30,6 +30,14 @@ namespace Model
             this.CurrentSnake = currentSnake;
 		}
 
+        public World(int size)
+        {
+            Snakes = new Dictionary<int, Snake>();
+            PowerUps = new Dictionary<int, PowerUp>();
+            Walls = new Dictionary<int, Wall>();
+            Size = size;
+        }
+
         /// <summary>
         /// This method is called to check if the players and powerups in the world are alive, if not
         /// they will be removed from the world.

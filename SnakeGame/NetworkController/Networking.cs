@@ -19,6 +19,7 @@ public static class Networking
     /// <param name="port">The the port to listen on</param>
     public static TcpListener StartServer(Action<SocketState> toCall, int port)
     {
+
         TcpListener tcpListener = new TcpListener(IPAddress.Any, port);
         try
         {
