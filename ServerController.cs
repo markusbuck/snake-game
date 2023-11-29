@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Xml;
-using SnakeGame;
 using Model;
+using SnakeGame;
 using NetworkUtil;
 using System.Text.RegularExpressions;
 
@@ -28,6 +28,15 @@ public class ServerController
     // A map of clients that are connected, each with an ID
     private Dictionary<long, SocketState> clients;
 
+    static void Main(string[] args)
+    {
+        XmlWriter xmlWriter = XmlWriter.Create("setting.xml");
+        xmlWriter.WriteStartDocument();
+        xmlWriter.WriteStartElement("GameSettings");
+        ServerController server = new ServerController(2000);
+        server.BeginServer();
+    }
+
 
     public ServerController(int s)
     {
@@ -38,7 +47,6 @@ public class ServerController
 
     public void BeginServer()
     {
-        Console.WriteLine("Server started");
         Networking.StartServer(NewClientConnected, 11000);
 
     }
@@ -50,7 +58,6 @@ public class ServerController
     /// <param name="state">The SocketState representing the new client</param>
     private void NewClientConnected(SocketState state)
     {
-        Console.WriteLine("Client Connected");
         if (state.ErrorOccurred)
             return;
 
@@ -147,7 +154,7 @@ public class ServerController
         }
     }
 
-    public void Run()
+    public void Run(SocketState state)
     {
         // Start a new timer to control the frame rate
         System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
