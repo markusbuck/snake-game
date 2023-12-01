@@ -83,7 +83,7 @@ public class ServerController
             return;
         }
 
-        ProcessMessage(state);
+        state.OnNetworkAction = ProcessMessage;
         // Continue the event loop that receives messages from this client
         Networking.GetData(state);
     }
@@ -107,7 +107,9 @@ public class ServerController
             if (p[p.Length - 1] != '\n')
                 break;
 
-            Console.WriteLine("received message from client " + state.ID + ": \"" + p.Substring(0, p.Length - 1) + "\"");
+            double headX = rand.Next(-size/2, size/2);
+            double headY = rand.Next(-size / 2, size / 2);
+
 
             // Remove it from the SocketState's growable buffer
             state.RemoveData(0, p.Length);
@@ -159,6 +161,7 @@ public class ServerController
             while (watch.ElapsedMilliseconds < msPerFrame)
             { /* empty loop body */ }
 
+            Console.WriteLine(watch.ElapsedMilliseconds);
             watch.Restart();
 
             Update();
