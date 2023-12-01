@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Xml;
 using Server;
+using System.Runtime.Serialization;
 namespace Server
 {
 
@@ -8,9 +9,12 @@ namespace Server
     {
         static void Main(string[] args)
         {
-            XmlWriter xmlWriter = XmlWriter.Create("setting.xml");
-            xmlWriter.WriteStartDocument();
-            xmlWriter.WriteStartElement("GameSettings");
+            DataContractSerializer ser = new(typeof(GameSettings));
+
+            XmlReader reader = XmlReader.Create("settings.xml");
+
+            GameSettings gameSettings = (GameSettings)ser.ReadObject(reader);
+
             ServerController server = new ServerController(2000);
 
             Console.WriteLine("Starting Server");

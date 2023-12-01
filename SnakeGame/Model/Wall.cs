@@ -4,25 +4,29 @@ using System;
 using SnakeGame;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
+using System.Runtime.Serialization;
+using System.Xml.Linq;
 
 namespace Model
 {
+
     /// <summary>
     /// This class represents a wall in the snake game.
     /// </summary>
-  
+    [DataContract(Namespace ="")]
     public class Wall
 	{
-		// Property for the wall ID
-		[XmlElement("ID")]
+        // Property for the wall ID
+
+        [DataMember(Name = "ID")]
 		public int wall { get; set; }
 
         // Property for the location of the wall in the game
-        [XmlElement("p1")]
-		public Vector2D p1 { get; set; }
+        [DataMember(Name = "p1")]
+        public Vector2D p1 { get; set; }
 
         // Property for the location of the wall in the game
-        [XmlElement("p2")]
+        [DataMember(Name = "p2")]
         public Vector2D p2 { get; set; }
 
         /// <summary>

@@ -15,10 +15,8 @@ namespace SnakeGame;
 public class Vector2D
 {
     [DataMember(Name = "x")]
-    [XmlElement("x")]
     public double X { get; set; }
     [DataMember(Name = "y")]
-    [XmlElement("y")]
     public double Y { get; set; }
 
     /// <summary>
