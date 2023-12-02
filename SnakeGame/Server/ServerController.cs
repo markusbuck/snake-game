@@ -4,6 +4,8 @@ using SnakeGame;
 using Model;
 using NetworkUtil;
 using System.Text.RegularExpressions;
+using System.Text.Json;
+using System.Text;
 
 namespace Server;
 
@@ -24,23 +26,30 @@ public class ServerController
 
     private int nextPlayerID = 0;
     private int nextPowID = 0;
+    private GameSettings gameSettings;
 
     // A map of clients that are connected, each with an ID
     private Dictionary<long, SocketState> clients;
 
 
-    public ServerController(int s)
+    public ServerController(GameSettings gameSettings)
     {
-        size = s;
-        theWorld = new(size);
-        clients = new Dictionary<long, SocketState>();
+        this.gameSettings = gameSettings;
+        this.size = gameSettings.UniverseSize;
+        this.theWorld = new World(this.size);
+
+        foreach(Wall wall in this.gameSettings.Walls)
+        {
+            this.theWorld.Walls[wall.wall] = wall;
+        }
+
+        this.clients = new Dictionary<long, SocketState>();
     }
 
     public void BeginServer()
     {
         Console.WriteLine("Server started");
         Networking.StartServer(NewClientConnected, 11000);
-
     }
 
     /// <summary>
@@ -54,19 +63,19 @@ public class ServerController
         if (state.ErrorOccurred)
             return;
 
-        // Save the client state
-        // Need to lock here because clients can disconnect at any time
-        lock (clients)
-        {
-            clients[state.ID] = state;
-        }
-
         // change the state's network action to the 
         // receive handler so we can process data when something
         // happens on the network
         state.OnNetworkAction = ReceiveMessage;
 
         Networking.GetData(state);
+
+        // Save the client state
+        // Need to lock here because clients can disconnect at any time
+        lock (clients)
+        {
+            clients[state.ID] = state;
+        }
     }
 
     /// <summary>
@@ -83,7 +92,11 @@ public class ServerController
             return;
         }
 
-        state.OnNetworkAction = ProcessMessage;
+        // TODO : This was called when the client gets closed, idk why 
+        //state.OnNetworkAction = ProcessMessage;
+
+        ProcessMessage(state);
+
         // Continue the event loop that receives messages from this client
         Networking.GetData(state);
     }
@@ -106,10 +119,27 @@ public class ServerController
             // So we need to ignore it if this happens. 
             if (p[p.Length - 1] != '\n')
                 break;
+            Console.WriteLine("received message from client " + state.ID + ": \"" + p.Substring(0, p.Length - 1) + "\"");
 
-            double headX = rand.Next(-size/2, size/2);
+
+            // I left it static for now
+            double headX = rand.Next(-size / 2, size / 2);
             double headY = rand.Next(-size / 2, size / 2);
 
+            double tailX = headX - 120;
+            double tailY = headY;
+
+            Vector2D headVector = new Vector2D(headX, headY);
+            Vector2D tailVector = new Vector2D(tailX, tailY);
+
+            List<Vector2D> body = new List<Vector2D>();
+            body.Add(tailVector);
+            body.Add(headVector);
+
+            Vector2D dir = new Vector2D(1, 0);
+            Snake snake = new Snake((int)state.ID, body, dir, p, 0, false, true, false, true);
+
+            this.theWorld.Snakes[(int)state.ID] = snake;
 
             // Remove it from the SocketState's growable buffer
             state.RemoveData(0, p.Length);
@@ -123,17 +153,92 @@ public class ServerController
             {
                 foreach (SocketState client in clients.Values)
                 {
-
                     //TODO: change sending info
-                    //if (!Networking.Send(client.TheSocket!, "Message from client " + state.ID + ": " + p))
-                        //disconnectedClients.Add(client.ID);
+                    if (!Networking.Send(client.TheSocket!, "Message from client " + state.ID + ": " + p))
+                        disconnectedClients.Add(client.ID);
+
                 }
             }
             foreach (long id in disconnectedClients)
                 RemoveClient(id);
+
+            state.OnNetworkAction = CommandRequest;
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            stringBuilder.Append(state.ID + "\n" + this.size + "\n");
+
+            foreach(Wall wall in this.gameSettings.Walls)
+            {
+                string jsonString = JsonSerializer.Serialize(wall);
+                
+                stringBuilder.Append(jsonString + "\n");
+            }
+
+            Console.WriteLine(stringBuilder.ToString());
+            Networking.Send(state.TheSocket,stringBuilder.ToString());
         }
     }
 
+
+    private void CommandRequest(SocketState state)
+    {
+        // Remove the client if they aren't still connected
+        if (state.ErrorOccurred)
+        {
+            RemoveClient(state.ID);
+            return;
+        }
+
+        ProcessCommand(state);
+
+        // Continue the event loop that receives messages from this client
+        Networking.GetData(state);
+    }
+
+    private void ProcessCommand(SocketState state)
+    {
+
+        string totalData = state.GetData();
+
+        string[] parts = Regex.Split(totalData, @"(?<=[\n])");
+
+        // Loop until we have processed all messages.
+        // We may have received more than one.
+        foreach (string p in parts)
+        {
+            // Ignore empty strings added by the regex splitter
+            if (p.Length == 0)
+                continue;
+            // The regex splitter will include the last string even if it doesn't end with a '\n',
+            // So we need to ignore it if this happens. 
+            if (p[p.Length - 1] != '\n')
+                break;
+
+            if (p.Contains("up"))
+            {
+                Console.WriteLine("Up");
+            }
+
+            if (p.Contains("left"))
+            {
+                Console.WriteLine("left");
+            }
+
+            if (p.Contains("Down"))
+            {
+                Console.WriteLine("Down");
+            }
+
+            if (p.Contains("right"))
+            {
+                Console.WriteLine("Right");
+            }
+
+            // Remove it from the SocketState's growable buffer
+            state.RemoveData(0, p.Length);
+        }
+    }
 
 
     /// <summary>
@@ -159,10 +264,11 @@ public class ServerController
         {
             // wait until the next frame
             while (watch.ElapsedMilliseconds < msPerFrame)
-            { /* empty loop body */ }
+            { /* empty loop body */}
 
             Console.WriteLine(watch.ElapsedMilliseconds);
             watch.Restart();
+
 
             Update();
 
@@ -183,18 +289,20 @@ public class ServerController
 
         // add new objects back in
         int halfSize = size / 2;
-        while (theWorld.Snakes.Count < maxPlayers)
-        {
-            // TODO: Figure out correct params to enter into the constructor
-            //Snake p = new Snake(nextPlayerID++, -halfSize + rand.Next(size), -halfSize + rand.Next(size), rand.NextDouble() * 360);
-            //theWorld.Snakes.Add(p.snake, p);
-        }
 
-        while (theWorld.PowerUps.Count < maxPowerups)
-        {
-            PowerUp p = new PowerUp(nextPowID++, new Vector2D(-halfSize + rand.Next(size), -halfSize + rand.Next(size)), false);
-            theWorld.PowerUps.Add(p.power, p);
-        }
+        // TODO: This is an infinite loop which is why it only printed the frame rate once
+        //while (theWorld.Snakes.Count < maxPlayers)
+        //{
+        //    // TODO: Figure out correct params to enter into the constructor
+        //    //Snake p = new Snake(nextPlayerID++, -halfSize + rand.Next(size), -halfSize + rand.Next(size), rand.NextDouble() * 360);
+        //    //theWorld.Snakes.Add(p.snake, p);
+        //}
+
+        //while (theWorld.PowerUps.Count < maxPowerups)
+        //{
+        //    PowerUp p = new PowerUp(nextPowID++, new Vector2D(-halfSize + rand.Next(size), -halfSize + rand.Next(size)), false);
+        //    theWorld.PowerUps.Add(p.power, p);
+        //}
 
         // move/update the existing objects in the world
         foreach (Snake p in theWorld.Snakes.Values)

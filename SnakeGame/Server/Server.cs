@@ -11,16 +11,16 @@ namespace Server
         {
             DataContractSerializer ser = new(typeof(GameSettings));
 
-            XmlReader reader = XmlReader.Create("settings.xml");
+            XmlReader reader = XmlReader.Create("./settings.xml");
 
             GameSettings gameSettings = (GameSettings)ser.ReadObject(reader);
 
-            ServerController server = new ServerController(2000);
+            ServerController server = new ServerController(gameSettings);
 
-            Console.WriteLine("Starting Server");
+            //Console.WriteLine("Starting Server");
             server.BeginServer();
 
-            Console.WriteLine("Starting Frame loop");
+            //Console.WriteLine("Starting Frame loop");
             Thread t = new Thread(server.Run);
             t.Start();
         }
