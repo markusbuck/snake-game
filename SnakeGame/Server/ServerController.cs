@@ -159,6 +159,7 @@ public class ServerController
 
                 }
             }
+
             foreach (long id in disconnectedClients)
                 RemoveClient(id);
 
@@ -215,24 +216,37 @@ public class ServerController
             if (p[p.Length - 1] != '\n')
                 break;
 
+            Snake snake = this.theWorld.Snakes[(int)state.ID];
+            Vector2D head = snake.body[snake.body.Count - 1];
+
             if (p.Contains("up"))
             {
-                Console.WriteLine("Up");
+                snake.dir.X = 0;
+                snake.dir.Y = -1;
+
+                snake.body.Add(new Vector2D(head.GetX(), head.GetY()));
             }
 
             if (p.Contains("left"))
             {
-                Console.WriteLine("left");
+                //snake.body.Add(new Vector2D());
+                snake.dir.X = -1;
+                snake.dir.Y = 0;
             }
 
-            if (p.Contains("Down"))
+            if (p.Contains("down"))
             {
-                Console.WriteLine("Down");
+                //snake.body.Add(new Vector2D());
+                snake.dir.X = 0;
+                snake.dir.Y = 1;
+              
             }
 
             if (p.Contains("right"))
             {
-                Console.WriteLine("Right");
+                //snake.body.Add(new Vector2D());
+                snake.dir.X = 1;
+                snake.dir.Y = 0;
             }
 
             // Remove it from the SocketState's growable buffer
@@ -266,7 +280,7 @@ public class ServerController
             while (watch.ElapsedMilliseconds < msPerFrame)
             { /* empty loop body */}
 
-            Console.WriteLine(watch.ElapsedMilliseconds);
+            //Console.WriteLine(watch.ElapsedMilliseconds);
             watch.Restart();
 
 
@@ -305,16 +319,68 @@ public class ServerController
         //}
 
         // move/update the existing objects in the world
+
+        StringBuilder stringBuilder = new StringBuilder();
+
         foreach (Snake p in theWorld.Snakes.Values)
-            //Add moving method into
-            //p.Step(theWorld.Size);
-            //REMOVE RETURN
-            return;
+        {
+
+            int snakeSpeed = 6;
+            //Vector2D head = p.body.ElementAt();
+
+            for(int i = p.body.Count - 1; i >= 0; i--)
+            {
+                Vector2D bodyPart = p.body.ElementAt(i);
+                bodyPart.X += p.dir.X * snakeSpeed;
+                bodyPart.Y += p.dir.Y * snakeSpeed;
+            }
+
+            //Vector2D tail = p.body.ElementAt(0);
+            //head.X += p.dir.X * snakeSpeed;
+            //head.Y += p.dir.Y * snakeSpeed;
+
+            //tail.X += p.dir.X * snakeSpeed;
+            //tail.Y += p.dir.Y * snakeSpeed;
+
+            stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
+        }
+
+        foreach(SocketState state in this.clients.Values)
+        {
+
+            Networking.Send(state.TheSocket, stringBuilder.ToString());
+        }
+
+        //Add moving method into
+        //p.Step(theWorld.Size);
+        //REMOVE RETURN
+        return;
 
         foreach (PowerUp p in theWorld.PowerUps.Values)
             //p.Step();
             // REMOVE RETURN
             return;
 
+    }
+
+    private bool SnakeWallCollision(Snake snake)
+    {
+        foreach(Wall wall in this.theWorld.Walls.Values)
+        {
+            Vector2D p1 = wall.p1;
+            Vector2D p2 = wall.p2;
+
+            Vector2D head = snake.body[snake.body.Count - 1];
+            Vector2D secondBody = snake.body[snake.body.Count - 2];
+
+            //snake.dir;
+
+            //if()
+            //{
+            //    return true;
+            //}
+                
+        }
+        return false;
     }
 }
