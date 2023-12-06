@@ -324,6 +324,7 @@ public class ServerController
 
         foreach (Snake p in theWorld.Snakes.Values)
         {
+            SnakeWallCollision(p);
 
             int snakeSpeed = 6;
             //Vector2D head = p.body.ElementAt();
@@ -370,16 +371,43 @@ public class ServerController
             Vector2D p1 = wall.p1;
             Vector2D p2 = wall.p2;
 
-            Vector2D head = snake.body[snake.body.Count - 1];
-            Vector2D secondBody = snake.body[snake.body.Count - 2];
+            Vector2D head = snake.body.Last();
+            double snakeHeadX = head.GetX();
+            double snakeHeadY = head.GetY();
 
-            //snake.dir;
+            double wallX1;
+            double wallX2;
+            double wallY1;
+            double wallY2;
+            if (wall.p1.GetX() > wall.p2.GetX())
+            {
+                wallX1 = wall.p1.GetX() + 25;
+                wallX2 = wall.p2.GetX() - 25;
 
-            //if()
-            //{
-            //    return true;
-            //}
-                
+            }
+            else 
+            {
+                wallX1 = wall.p1.GetX() - 25;
+                wallX2 = wall.p2.GetX() + 25;
+            }
+
+            if (wall.p1.GetY() < wall.p2.GetY())
+            {
+                wallY1 = wall.p1.GetY() + 25;
+                wallY2 = wall.p2.GetY() - 25;
+            }
+            else
+            {
+                wallY1 = wall.p1.GetY() - 25;
+                wallY2 = wall.p2.GetY() + 25;
+            
+            }
+            if (snakeHeadX > wallX1 && snakeHeadX < wallX2 &&
+                snakeHeadY > wallY1 && snakeHeadY < wallY2)
+            {
+                Console.WriteLine("Collision detected");
+                return true;
+            }
         }
         return false;
     }

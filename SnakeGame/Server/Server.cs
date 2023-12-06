@@ -11,7 +11,7 @@ namespace Server
         {
             DataContractSerializer ser = new(typeof(GameSettings));
 
-            XmlReader reader = XmlReader.Create("./settings.xml");
+            XmlReader reader = XmlReader.Create("settings.xml");
 
             GameSettings gameSettings = (GameSettings)ser.ReadObject(reader);
 
