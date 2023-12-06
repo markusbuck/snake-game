@@ -49,7 +49,73 @@ namespace Model
 			this.join = join;
 		}
 
-
-	}
+        public void Step(int speed, string movementRequest)
+        {
+            int snakeSpeed = speed;
+            if (this.dir.Equals(new Vector2D(0, 0)))
+            {
+                this.dir = (new Vector2D(1, 0));
+            }
+            Vector2D velocity = this.dir * snakeSpeed;
+            Console.WriteLine("velcocity: " + velocity.ToString());
+            if (this.died)
+            {
+                velocity = new Vector2D(0, 0);
+            }
+            else if (movementRequest == "right")
+            {
+                this.dir = new Vector2D(1, 0);
+                velocity = this.dir * snakeSpeed;
+                this.body.Add(this.body.Last() + velocity);
+            }
+            else if (movementRequest == "left")
+            {
+                this.dir = new Vector2D(-1, 0);
+                velocity = this.dir * snakeSpeed;
+                this.body.Add(this.body.Last() + velocity);
+            }
+            else if (movementRequest == "up")
+            {
+                this.dir = new Vector2D(0, -1);
+                velocity = this.dir * snakeSpeed;
+                this.body.Add(this.body.Last() + velocity);
+            }
+            else if (movementRequest == "down")
+            {
+                this.dir = new Vector2D(0, 1);
+                velocity = this.dir * snakeSpeed;
+                this.body.Add(this.body.Last() + velocity);
+            }
+            else
+            {
+                this.body[this.body.Count - 1] += velocity;
+            }
+            float angle = Vector2D.AngleBetweenPoints(this.body[0], this.body[1]);
+            if (this.died)
+            {
+                this.body[0] += new Vector2D(0, 0) * snakeSpeed;
+            }
+            else if (angle == 90)
+            {
+                this.body[0] += new Vector2D(-1, 0) * snakeSpeed;
+            }
+            else if (angle == -90)
+            {
+                this.body[0] += new Vector2D(1, 0) * snakeSpeed;
+            }
+            else if (angle == 0)
+            {
+                this.body[0] += new Vector2D(0, 1) * snakeSpeed;
+            }
+            else if (angle == 180)
+            {
+                this.body[0] += new Vector2D(0, -1) * snakeSpeed;
+            }
+            if (this.body[0].Equals(this.body[1]))
+            {
+                this.body.RemoveAt(0);
+            }
+        }
+    }
 }
 

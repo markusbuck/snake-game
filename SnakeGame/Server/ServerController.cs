@@ -33,6 +33,7 @@ public class ServerController
     private Dictionary<long, SocketState> clients;
 
     string movementRequest = "none";
+    int snakeSpeed = 6;
 
 
     public ServerController(GameSettings gameSettings)
@@ -41,7 +42,7 @@ public class ServerController
         this.size = gameSettings.UniverseSize;
         this.theWorld = new World(this.size);
 
-        foreach(Wall wall in this.gameSettings.Walls)
+        foreach (Wall wall in this.gameSettings.Walls)
         {
             this.theWorld.Walls[wall.wall] = wall;
         }
@@ -147,7 +148,7 @@ public class ServerController
             int dirX = rand.Next(-1, 2);
             int dirY;
             Console.WriteLine(dirX);
-            if(dirX == 0)
+            if (dirX == 0)
             {
                 dirY = rand.Next(-1, 1) + 1;
             }
@@ -155,9 +156,9 @@ public class ServerController
             {
                 dirY = 0;
             }
-           
+
             Console.WriteLine(dirY);
-            
+
             Vector2D dir = new Vector2D(dirX, dirY);
             Vector2D head = new Vector2D(headX, headY);
             Vector2D tail = new Vector2D(0, 0);
@@ -174,7 +175,7 @@ public class ServerController
             {
                 tail = new Vector2D(headX, headY - 120);
             }
-            else if(dir.ToAngle() == -90)
+            else if (dir.ToAngle() == -90)
             {
                 tail = new Vector2D(headX + 120, headY);
             }
@@ -213,15 +214,15 @@ public class ServerController
 
             stringBuilder.Append(state.ID + "\n" + this.size + "\n");
 
-            foreach(Wall wall in this.gameSettings.Walls)
+            foreach (Wall wall in this.gameSettings.Walls)
             {
                 string jsonString = JsonSerializer.Serialize(wall);
-                
+
                 stringBuilder.Append(jsonString + "\n");
             }
 
             Console.WriteLine(stringBuilder.ToString());
-            Networking.Send(state.TheSocket,stringBuilder.ToString());
+            Networking.Send(state.TheSocket, stringBuilder.ToString());
         }
     }
 
@@ -286,7 +287,7 @@ public class ServerController
                 //snake.dir.X = 0;
                 //snake.dir.Y = 1;
                 movementRequest = "down";
-              
+
             }
 
             if (p.Contains("right"))
@@ -378,101 +379,36 @@ public class ServerController
         foreach (Snake p in theWorld.Snakes.Values)
         {
 
-            int snakeSpeed = 6;
-            Vector2D velocity = p.dir * snakeSpeed;
-            //Vector2D head = p.body.ElementAt();
-
-            //for (int i = p.body.Count - 2; i >= 0; i--)
-            //{
-            //    Vector2D bodyPart = p.body.ElementAt(i);
-            //    bodyPart.X += p.dir.X * snakeSpeed;
-            //    bodyPart.Y += p.dir.Y * snakeSpeed;
-            //}
-
-            if (p.died)
-            {
-                velocity = new Vector2D(0, 0);
-            }
-            else if(movementRequest == "right")
-            {
-                p.dir = new Vector2D(1, 0);
-                velocity = p.dir * snakeSpeed;
-                p.body.Add(p.body.Last() + velocity);
-            }
-            else if(movementRequest == "left")
-            {
-                p.dir = new Vector2D(-1, 0);
-                velocity = p.dir * snakeSpeed;
-                p.body.Add(p.body.Last() + velocity);
-            }
-            else if (movementRequest == "up")
-            {
-                p.dir = new Vector2D(0, -1);
-                velocity = p.dir * snakeSpeed;
-                p.body.Add(p.body.Last() + velocity);
-            }
-            else if (movementRequest == "down")
-            {
-                p.dir = new Vector2D(0, 1);
-                velocity = p.dir * snakeSpeed;
-                p.body.Add(p.body.Last() + velocity);
-            }
-
-            p.body[p.body.Count - 1] += velocity;
-            float angle = Vector2D.AngleBetweenPoints(p.body[0], p.body[1]);
-            if(angle == 90)
-            {
-                p.body[0] += new Vector2D(-1, 0) * snakeSpeed;
-            }
-            else if(angle == -90)
-            {
-                p.body[0] += new Vector2D(1, 0) * snakeSpeed;
-            }
-            else if(angle == 0)
-            {
-                p.body[0] += new Vector2D(0, 1) * snakeSpeed;
-            }
-            else if(angle == 180)
-            {
-                p.body[0] += new Vector2D(0, -1) * snakeSpeed;
-            }
-            //Console.WriteLine(p.body[0] + " " + p.body[1]);
-
-            if (p.body[0].Equals(p.body[1]))
-            {
-                p.body.RemoveAt(0);
-            }
-
             Console.WriteLine(p.body.Last().GetX() + " " + p.body.Last().GetY());
-            bool isSnakeCollidingWall = SnakeWallCollision(p);
+            bool isSnakeColliding = SnakeWallCollision(p) || SnakeCollision(p);
 
-            //if(isSnakeCollidingWall)
-            //{
-            //    p.alive = false;
-            //    p.died = true;
-            //}
+            if (isSnakeColliding)
+            {
+                p.alive = false;
+                p.died = true;
 
-            //Vector2D tail = p.body.ElementAt(0);
-            //head.X += p.dir.X * snakeSpeed;
-            //head.Y += p.dir.Y * snakeSpeed;
+                System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+                watch.Start();
+                // wait until the next frame
+                while (watch.ElapsedMilliseconds < RespawnRate)
+                { /* empty loop body */}
 
-            //tail.X += p.dir.X * snakeSpeed;
-            //tail.Y += p.dir.Y * snakeSpeed;
+                watch.Stop();
+                
+                this.theWorld.Snakes[p.snake] = SnakeSpawn(p.snake, p.name);
+            }
+
+            p.Step(snakeSpeed, movementRequest);
 
             movementRequest = "none";
             stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
         }
 
-        foreach(SocketState state in this.clients.Values)
+        foreach (SocketState state in this.clients.Values)
         {
 
             Networking.Send(state.TheSocket, stringBuilder.ToString());
         }
-
-        //Add moving method into
-        //p.Step(theWorld.Size);
-        //REMOVE RETURN
-        return;
 
         foreach (PowerUp p in theWorld.PowerUps.Values)
             //p.Step();
@@ -483,7 +419,7 @@ public class ServerController
 
     private bool SnakeWallCollision(Snake snake)
     {
-        foreach(Wall wall in this.theWorld.Walls.Values)
+        foreach (Wall wall in this.theWorld.Walls.Values)
         {
             int snakeWidth = 10;
             int wallWidth = 25;
@@ -506,11 +442,6 @@ public class ServerController
             double snakeHeadX = head.GetX();
             double snakeHeadY = head.GetY();
 
-            double wallX1;
-            double wallX2;
-            double wallY1;
-            double wallY2;
-
             if (p1.GetX() - wallWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + wallWidth + snakeWidth
                 && p1.GetY() - wallWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + wallWidth + snakeWidth)
             {
@@ -518,42 +449,6 @@ public class ServerController
                 Console.WriteLine(s + " Collision detected");
                 return true;
             }
-            else
-            {
-                //Console.WriteLine("");
-            }
-
-
-
-            //if (wall.p1.GetX() > wall.p2.GetX())
-            //{
-            //    wallX1 = wall.p1.GetX() + 25;
-            //    wallX2 = wall.p2.GetX() - 25;
-
-            //}
-            //else 
-            //{
-            //    wallX1 = wall.p1.GetX() - 25;
-            //    wallX2 = wall.p2.GetX() + 25;
-            //}
-
-            //if (wall.p1.GetY() < wall.p2.GetY())
-            //{
-            //    wallY1 = wall.p1.GetY() + 25;
-            //    wallY2 = wall.p2.GetY() - 25;
-            //}
-            //else
-            //{
-            //    wallY1 = wall.p1.GetY() - 25;
-            //    wallY2 = wall.p2.GetY() + 25;
-
-            //}
-            //if (snakeHeadX > wallX1 && snakeHeadX < wallX2 &&
-            //    snakeHeadY > wallY1 && snakeHeadY < wallY2)
-            //{
-            //    Console.WriteLine("Collision detected");
-            //    return true;
-            //}
         }
         return false;
     }
@@ -583,10 +478,6 @@ public class ServerController
             double snakeHeadX = bodyPart.GetX();
             double snakeHeadY = bodyPart.GetY();
 
-            double wallX1;
-            double wallX2;
-            double wallY1;
-            double wallY2;
 
             if (p1.GetX() - wallWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + wallWidth + snakeWidth
                 && p1.GetY() - wallWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + wallWidth + snakeWidth)
@@ -595,17 +486,81 @@ public class ServerController
                 Console.WriteLine(s + " Collision detected");
                 return true;
             }
-            else
-            {
-                //Console.WriteLine("");
-            }
-
         }
 
         return false;
     }
 
-        private Snake SnakeSpawn(int ID, string name)
+    private bool SnakeCollision(Snake snake)
+    {
+        foreach(Snake p in theWorld.Snakes.Values)
+        {
+            int snakeWidth = 10;
+            
+            string s = "";
+            Vector2D p1;
+            Vector2D p2;
+            if (p.Equals(snake))
+            {
+                for (int i = 0; i < p.body.Count() - 2; i++)
+                {
+                    if ((p.body[i].GetX() < p.body[i + 1].GetX()) || (p.body[i].GetY() < p.body[i].GetY()))
+                    {
+                        p1 = p.body[i];
+                        p2 = p.body[i + 1];
+                    }
+                    else
+                    {
+                        p1 = p.body[i + 1];
+                        p2 = p.body[i];
+                    }
+
+                    Vector2D head = snake.body.Last();
+                    double snakeHeadX = head.GetX();
+                    double snakeHeadY = head.GetY();
+
+                    if (p1.GetX() - snakeWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + snakeWidth + snakeWidth
+                        && p1.GetY() - snakeWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + snakeWidth + snakeWidth)
+                    {
+                        Console.WriteLine("Collision detected");
+                        Console.WriteLine(s + " Collision detected");
+                        return true;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < p.body.Count() - 1; i++)
+                {
+                    if ((p.body[i].GetX() < p.body[i + 1].GetX()) || (p.body[i].GetY() < p.body[i].GetY()))
+                    {
+                        p1 = p.body[i];
+                        p2 = p.body[i + 1];
+                    }
+                    else
+                    {
+                        p1 = p.body[i + 1];
+                        p2 = p.body[i];
+                    }
+
+                    Vector2D head = snake.body.Last();
+                    double snakeHeadX = head.GetX();
+                    double snakeHeadY = head.GetY();
+
+                    if (p1.GetX() - snakeWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + snakeWidth + snakeWidth
+                        && p1.GetY() - snakeWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + snakeWidth + snakeWidth)
+                    {
+                        Console.WriteLine("Collision detected");
+                        Console.WriteLine(s + " Collision detected");
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private Snake SnakeSpawn(int ID, string name)
     {
         double headX = rand.Next(-size / 2, size / 2);
         double headY = rand.Next(-size / 2, size / 2);
@@ -652,7 +607,7 @@ public class ServerController
         Snake snake = new Snake(ID, body, dir, name, 0, false, true, false, true);
 
 
-        bool isSnakeCollidingWall = isSnakeCollidingWall = this.SnakeBodyCollision(snake, 0) && this.SnakeBodyCollision(snake, 1); ;
+        bool isSnakeCollidingWall = this.SnakeBodyCollision(snake, 0) || this.SnakeBodyCollision(snake, 1);
 
         while (!isSnakeCollidingWall)
         {
