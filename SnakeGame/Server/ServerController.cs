@@ -31,6 +31,8 @@ public class ServerController
     // A map of clients that are connected, each with an ID
     private Dictionary<long, SocketState> clients;
 
+    string movementRequest = "none";
+
 
     public ServerController(GameSettings gameSettings)
     {
@@ -126,17 +128,58 @@ public class ServerController
             double headX = rand.Next(-size / 2, size / 2);
             double headY = rand.Next(-size / 2, size / 2);
 
-            double tailX = headX - 120;
-            double tailY = headY;
+            //double tailX = headX - 120;
+            //double tailY = headY;
 
-            Vector2D headVector = new Vector2D(headX, headY);
-            Vector2D tailVector = new Vector2D(tailX, tailY);
+            //Vector2D headVector = new Vector2D(headX, headY);
+            //Vector2D tailVector = new Vector2D(tailX, tailY);
 
+            //List<Vector2D> body = new List<Vector2D>();
+            //body.Add(tailVector);
+            //body.Add(headVector);
+
+            //Vector2D dir = new Vector2D(1, 0);
+            //Snake snake = new Snake((int)state.ID, body, dir, p, 0, false, true, false, true);
+
+
+
+            int dirX = rand.Next(-1, 2);
+            int dirY;
+            Console.WriteLine(dirX);
+            if(dirX == 0)
+            {
+                dirY = rand.Next(-1, 1) + 1;
+            }
+            else
+            {
+                dirY = 0;
+            }
+           
+            Console.WriteLine(dirY);
+            
+            Vector2D dir = new Vector2D(dirX, dirY);
+            Vector2D head = new Vector2D(headX, headY);
+            Vector2D tail = new Vector2D(0, 0);
+
+            if (dir.ToAngle() == 0)
+            {
+                tail = new Vector2D(headX, headY + 120);
+            }
+            else if (dir.ToAngle() == 90)
+            {
+                tail = new Vector2D(headX - 120, headY);
+            }
+            else if (dir.ToAngle() == 180)
+            {
+                tail = new Vector2D(headX, headY - 120);
+            }
+            else if(dir.ToAngle() == -90)
+            {
+                tail = new Vector2D(headX + 120, headY);
+            }
             List<Vector2D> body = new List<Vector2D>();
-            body.Add(tailVector);
-            body.Add(headVector);
-
-            Vector2D dir = new Vector2D(1, 0);
+            body.Add(tail);
+            body.Add(head);
             Snake snake = new Snake((int)state.ID, body, dir, p, 0, false, true, false, true);
 
             this.theWorld.Snakes[(int)state.ID] = snake;
@@ -221,32 +264,41 @@ public class ServerController
 
             if (p.Contains("up"))
             {
-                snake.dir.X = 0;
-                snake.dir.Y = -1;
+                //snake.dir.X = 0;
+                //snake.dir.Y = -1;
 
-                snake.body.Add(new Vector2D(head.GetX(), head.GetY()));
+                //snake.body.Add(new Vector2D(head.GetX(), head.GetY()));
+                movementRequest = "up";
             }
 
             if (p.Contains("left"))
             {
                 //snake.body.Add(new Vector2D());
-                snake.dir.X = -1;
-                snake.dir.Y = 0;
+                //snake.dir.X = -1;
+                //snake.dir.Y = 0;
+                movementRequest = "left";
             }
 
             if (p.Contains("down"))
             {
                 //snake.body.Add(new Vector2D());
-                snake.dir.X = 0;
-                snake.dir.Y = 1;
+                //snake.dir.X = 0;
+                //snake.dir.Y = 1;
+                movementRequest = "down";
               
             }
 
             if (p.Contains("right"))
             {
                 //snake.body.Add(new Vector2D());
-                snake.dir.X = 1;
-                snake.dir.Y = 0;
+                //snake.dir.X = 1;
+                //snake.dir.Y = 0;
+                movementRequest = "right";
+            }
+
+            if (p.Contains("none"))
+            {
+                movementRequest = "none";
             }
 
             // Remove it from the SocketState's growable buffer
@@ -327,14 +379,70 @@ public class ServerController
             SnakeWallCollision(p);
 
             int snakeSpeed = 6;
+            Vector2D velocity = p.dir * snakeSpeed;
             //Vector2D head = p.body.ElementAt();
 
-            for(int i = p.body.Count - 1; i >= 0; i--)
+            //for (int i = p.body.Count - 2; i >= 0; i--)
+            //{
+            //    Vector2D bodyPart = p.body.ElementAt(i);
+            //    bodyPart.X += p.dir.X * snakeSpeed;
+            //    bodyPart.Y += p.dir.Y * snakeSpeed;
+            //}
+
+            if (p.died)
             {
-                Vector2D bodyPart = p.body.ElementAt(i);
-                bodyPart.X += p.dir.X * snakeSpeed;
-                bodyPart.Y += p.dir.Y * snakeSpeed;
+                velocity = new Vector2D(0, 0);
             }
+            else if(movementRequest == "right")
+            {
+                p.dir = new Vector2D(1, 0);
+                velocity = p.dir * snakeSpeed;
+                p.body.Add(p.body.Last() + velocity);
+            }
+            else if(movementRequest == "left")
+            {
+                p.dir = new Vector2D(-1, 0);
+                velocity = p.dir * snakeSpeed;
+                p.body.Add(p.body.Last() + velocity);
+            }
+            else if (movementRequest == "up")
+            {
+                p.dir = new Vector2D(0, -1);
+                velocity = p.dir * snakeSpeed;
+                p.body.Add(p.body.Last() + velocity);
+            }
+            else if (movementRequest == "down")
+            {
+                p.dir = new Vector2D(0, 1);
+                velocity = p.dir * snakeSpeed;
+                p.body.Add(p.body.Last() + velocity);
+            }
+
+            p.body[p.body.Count - 1] += velocity;
+            float angle = Vector2D.AngleBetweenPoints(p.body[0], p.body[1]);
+            if(angle == 90)
+            {
+                p.body[0] += new Vector2D(-1, 0) * snakeSpeed;
+            }
+            else if(angle == -90)
+            {
+                p.body[0] += new Vector2D(1, 0) * snakeSpeed;
+            }
+            else if(angle == 0)
+            {
+                p.body[0] += new Vector2D(0, 1) * snakeSpeed;
+            }
+            else if(angle == 180)
+            {
+                p.body[0] += new Vector2D(0, -1) * snakeSpeed;
+            }
+            Console.WriteLine(p.body[0] + " " + p.body[1]);
+
+            if (p.body[0].Equals(p.body[1]))
+            {
+                p.body.RemoveAt(0);
+            }
+            
 
             //Vector2D tail = p.body.ElementAt(0);
             //head.X += p.dir.X * snakeSpeed;
@@ -343,6 +451,7 @@ public class ServerController
             //tail.X += p.dir.X * snakeSpeed;
             //tail.Y += p.dir.Y * snakeSpeed;
 
+            movementRequest = "none";
             stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
         }
 
