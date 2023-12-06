@@ -6,6 +6,7 @@ using NetworkUtil;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Text;
+using System.Xml.Linq;
 
 namespace Server;
 
@@ -376,7 +377,6 @@ public class ServerController
 
         foreach (Snake p in theWorld.Snakes.Values)
         {
-            SnakeWallCollision(p);
 
             int snakeSpeed = 6;
             Vector2D velocity = p.dir * snakeSpeed;
@@ -436,13 +436,21 @@ public class ServerController
             {
                 p.body[0] += new Vector2D(0, -1) * snakeSpeed;
             }
-            Console.WriteLine(p.body[0] + " " + p.body[1]);
+            //Console.WriteLine(p.body[0] + " " + p.body[1]);
 
             if (p.body[0].Equals(p.body[1]))
             {
                 p.body.RemoveAt(0);
             }
-            
+
+            Console.WriteLine(p.body.Last().GetX() + " " + p.body.Last().GetY());
+            bool isSnakeCollidingWall = SnakeWallCollision(p);
+
+            //if(isSnakeCollidingWall)
+            //{
+            //    p.alive = false;
+            //    p.died = true;
+            //}
 
             //Vector2D tail = p.body.ElementAt(0);
             //head.X += p.dir.X * snakeSpeed;
@@ -477,8 +485,22 @@ public class ServerController
     {
         foreach(Wall wall in this.theWorld.Walls.Values)
         {
-            Vector2D p1 = wall.p1;
-            Vector2D p2 = wall.p2;
+            int snakeWidth = 10;
+            int wallWidth = 25;
+            string s = "";
+            Vector2D p1;
+            Vector2D p2;
+
+            if ((wall.p1.GetX() < wall.p2.GetX()) || (wall.p1.GetY() < wall.p2.GetY()))
+            {
+                p1 = wall.p1;
+                p2 = wall.p2;
+            }
+            else
+            {
+                p1 = wall.p2;
+                p2 = wall.p1;
+            }
 
             Vector2D head = snake.body.Last();
             double snakeHeadX = head.GetX();
@@ -488,36 +510,199 @@ public class ServerController
             double wallX2;
             double wallY1;
             double wallY2;
-            if (wall.p1.GetX() > wall.p2.GetX())
-            {
-                wallX1 = wall.p1.GetX() + 25;
-                wallX2 = wall.p2.GetX() - 25;
 
-            }
-            else 
+            if (p1.GetX() - wallWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + wallWidth + snakeWidth
+                && p1.GetY() - wallWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + wallWidth + snakeWidth)
             {
-                wallX1 = wall.p1.GetX() - 25;
-                wallX2 = wall.p2.GetX() + 25;
-            }
-
-            if (wall.p1.GetY() < wall.p2.GetY())
-            {
-                wallY1 = wall.p1.GetY() + 25;
-                wallY2 = wall.p2.GetY() - 25;
+                Console.WriteLine("Collision detected");
+                Console.WriteLine(s + " Collision detected");
+                return true;
             }
             else
             {
-                wallY1 = wall.p1.GetY() - 25;
-                wallY2 = wall.p2.GetY() + 25;
-            
+                //Console.WriteLine("");
             }
-            if (snakeHeadX > wallX1 && snakeHeadX < wallX2 &&
-                snakeHeadY > wallY1 && snakeHeadY < wallY2)
-            {
-                Console.WriteLine("Collision detected");
-                return true;
-            }
+
+
+
+            //if (wall.p1.GetX() > wall.p2.GetX())
+            //{
+            //    wallX1 = wall.p1.GetX() + 25;
+            //    wallX2 = wall.p2.GetX() - 25;
+
+            //}
+            //else 
+            //{
+            //    wallX1 = wall.p1.GetX() - 25;
+            //    wallX2 = wall.p2.GetX() + 25;
+            //}
+
+            //if (wall.p1.GetY() < wall.p2.GetY())
+            //{
+            //    wallY1 = wall.p1.GetY() + 25;
+            //    wallY2 = wall.p2.GetY() - 25;
+            //}
+            //else
+            //{
+            //    wallY1 = wall.p1.GetY() - 25;
+            //    wallY2 = wall.p2.GetY() + 25;
+
+            //}
+            //if (snakeHeadX > wallX1 && snakeHeadX < wallX2 &&
+            //    snakeHeadY > wallY1 && snakeHeadY < wallY2)
+            //{
+            //    Console.WriteLine("Collision detected");
+            //    return true;
+            //}
         }
         return false;
+    }
+
+    private bool SnakeBodyCollision(Snake snake, int bodyIndex)
+    {
+        foreach (Wall wall in this.theWorld.Walls.Values)
+        {
+            int snakeWidth = 10;
+            int wallWidth = 25;
+            string s = "";
+            Vector2D p1;
+            Vector2D p2;
+
+            if ((wall.p1.GetX() < wall.p2.GetX()) || (wall.p1.GetY() < wall.p2.GetY()))
+            {
+                p1 = wall.p1;
+                p2 = wall.p2;
+            }
+            else
+            {
+                p1 = wall.p2;
+                p2 = wall.p1;
+            }
+
+            Vector2D bodyPart = snake.body.ElementAt(bodyIndex);
+            double snakeHeadX = bodyPart.GetX();
+            double snakeHeadY = bodyPart.GetY();
+
+            double wallX1;
+            double wallX2;
+            double wallY1;
+            double wallY2;
+
+            if (p1.GetX() - wallWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + wallWidth + snakeWidth
+                && p1.GetY() - wallWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + wallWidth + snakeWidth)
+            {
+                Console.WriteLine("Collision detected");
+                Console.WriteLine(s + " Collision detected");
+                return true;
+            }
+            else
+            {
+                //Console.WriteLine("");
+            }
+
+        }
+
+        return false;
+    }
+
+        private Snake SnakeSpawn(int ID, string name)
+    {
+        double headX = rand.Next(-size / 2, size / 2);
+        double headY = rand.Next(-size / 2, size / 2);
+
+
+        int dirX = rand.Next(-1, 2);
+        int dirY;
+        Console.WriteLine(dirX);
+        if (dirX == 0)
+        {
+            dirY = rand.Next(-1, 1) + 1;
+        }
+        else
+        {
+            dirY = 0;
+        }
+
+        Console.WriteLine(dirY);
+
+        Vector2D dir = new Vector2D(dirX, dirY);
+        Vector2D head = new Vector2D(headX, headY);
+        Vector2D tail = new Vector2D(0, 0);
+
+        if (dir.ToAngle() == 0)
+        {
+            tail = new Vector2D(headX, headY + 120);
+        }
+        else if (dir.ToAngle() == 90)
+        {
+            tail = new Vector2D(headX - 120, headY);
+        }
+        else if (dir.ToAngle() == 180)
+        {
+            tail = new Vector2D(headX, headY - 120);
+        }
+        else if (dir.ToAngle() == -90)
+        {
+            tail = new Vector2D(headX + 120, headY);
+        }
+        List<Vector2D> body = new List<Vector2D>();
+        body.Add(tail);
+        body.Add(head);
+
+        Snake snake = new Snake(ID, body, dir, name, 0, false, true, false, true);
+
+
+        bool isSnakeCollidingWall = isSnakeCollidingWall = this.SnakeBodyCollision(snake, 0) && this.SnakeBodyCollision(snake, 1); ;
+
+        while (!isSnakeCollidingWall)
+        {
+            headX = rand.Next(-size / 2, size / 2);
+            headY = rand.Next(-size / 2, size / 2);
+
+
+            dirX = rand.Next(-1, 2);
+
+            Console.WriteLine(dirX);
+            if (dirX == 0)
+            {
+                dirY = rand.Next(-1, 1) + 1;
+            }
+            else
+            {
+                dirY = 0;
+            }
+
+            Console.WriteLine(dirY);
+
+            dir = new Vector2D(dirX, dirY);
+            head = new Vector2D(headX, headY);
+            tail = new Vector2D(0, 0);
+
+            if (dir.ToAngle() == 0)
+            {
+                tail = new Vector2D(headX, headY + 120);
+            }
+            else if (dir.ToAngle() == 90)
+            {
+                tail = new Vector2D(headX - 120, headY);
+            }
+            else if (dir.ToAngle() == 180)
+            {
+                tail = new Vector2D(headX, headY - 120);
+            }
+            else if (dir.ToAngle() == -90)
+            {
+                tail = new Vector2D(headX + 120, headY);
+            }
+            body = new List<Vector2D>();
+            body.Add(tail);
+            body.Add(head);
+
+            snake = new Snake(ID, body, dir, name, 0, false, true, false, true);
+
+            isSnakeCollidingWall = this.SnakeBodyCollision(snake, 0) && this.SnakeBodyCollision(snake, 1);
+        }
+
+        return snake;
     }
 }
