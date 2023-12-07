@@ -9,9 +9,9 @@ namespace Model
     /// This class represents a snake in the snake game.
     /// </summary>
 	public class Snake
-	{
-		public int snake { get; set; }
-		public string name { get; set; }
+    {
+        public int snake { get; set; }
+        public string name { get; set; }
         public List<Vector2D> body { get; set; }
         public Vector2D dir { get; set; }
         public int score { get; set; }
@@ -19,6 +19,8 @@ namespace Model
         public bool alive { get; set; }
         public bool dc { get; set; }
         public bool join { get; set; }
+
+        private bool recievedPowerup;
 
         /// <summary>
         /// Constructor for Json Deserializing that creates a snake, given an ID,
@@ -36,18 +38,61 @@ namespace Model
         /// <param name="dc">Bool representing if they've disconnected from the server.</param>
         /// <param name="join"Bool representing if they've connected to the server.></param>
         [JsonConstructor]
-		public Snake(int snake, List<Vector2D> body, Vector2D dir, string name, int score, bool died, bool alive, bool dc, bool join)
-		{
-			this.snake = snake;
-			this.name = name;
-			this.body = body;
-			this.dir = dir;
-			this.score = score;
-			this.died = died;
-			this.alive = alive;
-			this.dc = dc;
-			this.join = join;
-		}
+        public Snake(int snake, List<Vector2D> body, Vector2D dir, string name, int score, bool died, bool alive, bool dc, bool join)
+        {
+            this.snake = snake;
+            this.name = name;
+            this.body = body;
+            this.dir = dir;
+            this.score = score;
+            this.died = died;
+            this.alive = alive;
+            this.dc = dc;
+            this.join = join;
+        }
+
+        public void ChangeDirection(string movementRequest, int speed)
+        {
+            if (movementRequest == "right")
+            {
+                this.dir = new Vector2D(1, 0);
+            }
+            else if (movementRequest == "left")
+            {
+                this.dir = new Vector2D(-1, 0);
+            }
+            else if (movementRequest == "up")
+            {
+                this.dir = new Vector2D(0, -1);
+            }
+            else if (movementRequest == "down")
+            {
+                this.dir = new Vector2D(0, 1);
+            }
+            else
+            {
+                //this.dir = new Vector2D(0, 0);
+            }
+
+            this.body.Add(this.body.Last());
+        }
+
+        public void RecievedPowerup()
+        {
+            int frameRate = 34;
+            double deltaTime = 1000 / frameRate;
+            System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+
+            this.recievedPowerup = true;
+            watch.Start();
+            // wait until the next frame
+            while (watch.ElapsedMilliseconds < 24 * deltaTime)
+            { /* empty loop body */}
+
+            watch.Stop();
+            this.recievedPowerup = false;
+
+        }
 
         public void Step(int speed, string movementRequest)
         {
@@ -56,40 +101,16 @@ namespace Model
             {
                 this.dir = (new Vector2D(1, 0));
             }
+
             Vector2D velocity = this.dir * snakeSpeed;
-            Console.WriteLine("velcocity: " + velocity.ToString());
-            if (this.died)
+            this.body[this.body.Count - 1] += velocity; // head
+
+            if (this.body.Count < 2)
             {
-                velocity = new Vector2D(0, 0);
+                return;
             }
-            else if (movementRequest == "right")
-            {
-                this.dir = new Vector2D(1, 0);
-                velocity = this.dir * snakeSpeed;
-                this.body.Add(this.body.Last() + velocity);
-            }
-            else if (movementRequest == "left")
-            {
-                this.dir = new Vector2D(-1, 0);
-                velocity = this.dir * snakeSpeed;
-                this.body.Add(this.body.Last() + velocity);
-            }
-            else if (movementRequest == "up")
-            {
-                this.dir = new Vector2D(0, -1);
-                velocity = this.dir * snakeSpeed;
-                this.body.Add(this.body.Last() + velocity);
-            }
-            else if (movementRequest == "down")
-            {
-                this.dir = new Vector2D(0, 1);
-                velocity = this.dir * snakeSpeed;
-                this.body.Add(this.body.Last() + velocity);
-            }
-            else
-            {
-                this.body[this.body.Count - 1] += velocity;
-            }
+
+            float poweredUp = this.recievedPowerup ? 0 : 1;
             float angle = Vector2D.AngleBetweenPoints(this.body[0], this.body[1]);
             if (this.died)
             {
@@ -97,19 +118,19 @@ namespace Model
             }
             else if (angle == 90)
             {
-                this.body[0] += new Vector2D(-1, 0) * snakeSpeed;
+                this.body[0] += new Vector2D(-1, 0) * snakeSpeed * poweredUp;
             }
             else if (angle == -90)
             {
-                this.body[0] += new Vector2D(1, 0) * snakeSpeed;
+                this.body[0] += new Vector2D(1, 0) * snakeSpeed * poweredUp;
             }
             else if (angle == 0)
             {
-                this.body[0] += new Vector2D(0, 1) * snakeSpeed;
+                this.body[0] += new Vector2D(0, 1) * snakeSpeed * poweredUp;
             }
             else if (angle == 180)
             {
-                this.body[0] += new Vector2D(0, -1) * snakeSpeed;
+                this.body[0] += new Vector2D(0, -1) * snakeSpeed * poweredUp;
             }
             if (this.body[0].Equals(this.body[1]))
             {
@@ -118,4 +139,3 @@ namespace Model
         }
     }
 }
-
