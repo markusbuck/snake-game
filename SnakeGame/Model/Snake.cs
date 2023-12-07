@@ -53,19 +53,27 @@ namespace Model
 
         public void ChangeDirection(string movementRequest, int speed)
         {
-            if (movementRequest == "right")
+            Vector2D right = new Vector2D(1, 0);
+            Vector2D left = new Vector2D(-1, 0);
+            Vector2D up = new Vector2D(0, -1);
+            Vector2D down = new Vector2D(0, 1);
+
+            Console.WriteLine(this.dir.Equals(right));
+
+            if (movementRequest == "right" && !this.dir.Equals(left))
             {
                 this.dir = new Vector2D(1, 0);
             }
-            else if (movementRequest == "left")
+            else if (movementRequest == "left" && !this.dir.Equals(right))
             {
+                
                 this.dir = new Vector2D(-1, 0);
             }
-            else if (movementRequest == "up")
+            else if (movementRequest == "up" && !this.dir.Equals(down))
             {
                 this.dir = new Vector2D(0, -1);
             }
-            else if (movementRequest == "down")
+            else if (movementRequest == "down" && !this.dir.Equals(up))
             {
                 this.dir = new Vector2D(0, 1);
             }

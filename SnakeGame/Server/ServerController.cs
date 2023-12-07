@@ -785,8 +785,8 @@ public class ServerController
         foreach (Wall wall in this.theWorld.Walls.Values)
         {
 
-            double locationX = rand.Next(-size / 2, size / 2);
-            double locationY = rand.Next(-size / 2, size / 2);
+            double locationX = rand.Next(-size / 2 + 100, size / 2 - 50);
+            double locationY = rand.Next(-size / 2 + 100, size / 2 - 50);
 
             Vector2D p1;
             Vector2D p2;
@@ -810,6 +810,12 @@ public class ServerController
             {
                 if (p1.GetX() - wallWidth - powerupWidth - offset < locationX && locationX < p2.GetX() + wallWidth + powerupWidth + offset
                 && p1.GetY() - wallWidth - powerupWidth - offset < locationY && locationY < p2.GetY() + wallWidth + powerupWidth + offset)
+                {
+                    collision = true;
+                }
+
+                if (locationX > size || locationX < -size ||
+                locationY > size || locationY < -size)
                 {
                     collision = true;
                 }
