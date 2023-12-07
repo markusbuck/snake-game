@@ -404,7 +404,7 @@ public class ServerController
             {
 
                 //Console.WriteLine(p.body.Last().GetX() + " " + p.body.Last().GetY());
-                bool isSnakeColliding = SnakeWallCollision(p);
+                bool isSnakeColliding = SnakeWallCollision(p) || this.SnakeCollisionSnake(p) || this.SnakeCollisionSelf(p);
 
                 if (p.alive && isSnakeColliding)
                 {
@@ -552,10 +552,57 @@ public class ServerController
         return false;
     }
 
+    private bool SnakeCollisionSelf(Snake snake)
+    {
+        int snakeWidth = 10;
+
+        if(snake.body.Count < 5)
+        {
+            return false;
+        }
+
+        Vector2D head = snake.body.Last();
+
+        for (int i = 0; i < snake.body.Count - 4; i++)
+        {
+            int j = i + 1;
+            
+            Vector2D p1 = snake.body[i];
+            Vector2D p2 = snake.body[j];
+
+            if ((p1.GetX() > p2.GetX()) || (p1.GetY() > p2.GetY()))
+            {
+                p1 = p2;
+                p2 = p1;
+            }
+
+            double snakeHeadX = head.GetX();
+            double snakeHeadY = head.GetY();
+
+
+            if (p1.GetX()  - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX()  + snakeWidth
+                && p1.GetY()  - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + snakeWidth)
+            {
+                //Console.WriteLine("Collision detected");
+                //Console.WriteLine(s + " Collision detected");
+                return true;
+            }
+            
+
+        }
+
+        return false;
+    }
+
     private bool SnakeCollisionSnake(Snake snake)
     {
         foreach (Snake p in theWorld.Snakes.Values)
         {
+            if(p.snake == snake.snake)
+            {
+                continue;
+            }
+
             int snakeWidth = 10;
 
             string s = "";
