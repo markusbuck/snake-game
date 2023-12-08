@@ -1,15 +1,14 @@
 ﻿Project implemented by Kevin Soto-Miranda and Markus Buckwalter
-Date: November 26, 2023
+Date: December 7, 2023
 
-Our SnakeGame solution is set up by having a Model Project that contains a file for a PowerUp, a Snake, a Wall, and a World.
-Each of the objects in the game work by using Vector2D objects which is contained in another project. 
-The Game itself waits for user input in the view which is contained in the SnakeClient project, once user input is taken in,
-The logic that controlls the game is in the GameController project. The GameController works with the NetworkingController,
-as well as the various objects in the Model project to make the game function.
+IMPORTANT: To properly use and test our server the settings.xml file directory must be in the directory for the project
+like /.../game-codemurray_game/SnakeGame/Server/bin/Debug/net7.0/settings.xml
+This is to ensure the settings can be read and deserialized to setup the world. To do this you can copy
+and paste the settings.xml file given into the proper folder. 
 
-We started our project by first trying to initiate the handshake.
-We got the protcol to work as expected and currently do not experience any bugs.
-Upon completion of working out all the kinks in that section of the game, we then moved onto the the sending of the user input
-to change the direction. When testing that we decided to move onto the drawing of the world, snakes, and powerups. There were
-a lot of bugs throughout the whole process but we were able to work through them and get our game to a point that runs smoothly.
-Our design decisions were made with the idea in mind that we would not be playing with a big amount of players.
+Our Server is setup to favor a smaller user. The server might not be able to handle over a certain amount of users.
+The smaller amount of players that utilize our server the better. This performance is caused by the use of locks to help
+manage race conditions when running different clients on seperate threads. The overall performance of our game
+works as expected. There are no extra features as we were limited on time and wanted to ensure our basic funtionality was
+working. The server controller is where the main functionality of our server can be found. Using model obejcts while working
+with the server controller we were able to get a working server side of the game.
