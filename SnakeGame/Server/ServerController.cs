@@ -312,10 +312,10 @@ public class ServerController
             theWorld.Snakes[(int)id].alive = false;
             //theWorld.Snakes[(int)id].died = true;
 
-            lock (theWorld)
-            {
-                theWorld.Snakes.Remove((int)id);
-            }
+            //lock (theWorld)
+            //{
+            //    theWorld.Snakes.Remove((int)id);
+            //}
             clients.Remove(id);
 
         }
@@ -362,7 +362,7 @@ public class ServerController
         {
             foreach (int i in playersToRemove)
             {
-                RemoveClient(i);
+                //RemoveClient(i);
             }
 
             foreach (int i in powsToRemove)
