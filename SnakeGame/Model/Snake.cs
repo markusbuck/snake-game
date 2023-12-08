@@ -77,11 +77,6 @@ namespace Model
             {
                 this.dir = new Vector2D(0, 1);
             }
-            else
-            {
-                //this.dir = new Vector2D(0, 0);
-            }
-
             this.body.Add(this.body.Last());
         }
 
@@ -145,5 +140,17 @@ namespace Model
                 this.body.RemoveAt(0);
             }
         }
+
+        public void WrapAround()
+        {
+            if(this.body.Last().GetX() >= 999)
+            {
+                this.body.Add(new Vector2D(-999, body.Last().GetY()));
+                this.body.Add(new Vector2D(-999, body.Last().GetY()));
+
+
+            }
+        }
+
     }
 }

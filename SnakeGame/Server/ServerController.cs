@@ -47,12 +47,6 @@ public class ServerController
             this.theWorld.Walls[wall.wall] = wall;
         }
 
-        for (int i = 0; i < maxPowerups; i++)
-        {
-            PowerUp powerUp = new PowerUp(i, this.PowerupSpawn(25), false);
-            this.theWorld.PowerUps[i] = powerUp;
-        }
-
         this.clients = new Dictionary<long, SocketState>();
     }
 
@@ -79,13 +73,6 @@ public class ServerController
         state.OnNetworkAction = ReceiveMessage;
 
         Networking.GetData(state);
-
-        // Save the client state
-        // Need to lock here because clients can disconnect at any time
-        lock (clients)
-        {
-            clients[state.ID] = state;
-        }
     }
 
     /// <summary>
@@ -102,7 +89,7 @@ public class ServerController
             return;
         }
 
-        // TODO : This was called when the client gets closed, idk why 
+        // TODO : This was called when the client gets closed, idk why
         //state.OnNetworkAction = ProcessMessage;
 
         ProcessMessage(state);
@@ -135,21 +122,6 @@ public class ServerController
             // I left it static for now
             double headX = rand.Next(-size / 2, size / 2);
             double headY = rand.Next(-size / 2, size / 2);
-
-            //double tailX = headX - 120;
-            //double tailY = headY;
-
-            //Vector2D headVector = new Vector2D(headX, headY);
-            //Vector2D tailVector = new Vector2D(tailX, tailY);
-
-            //List<Vector2D> body = new List<Vector2D>();
-            //body.Add(tailVector);
-            //body.Add(headVector);
-
-            //Vector2D dir = new Vector2D(1, 0);
-            //Snake snake = new Snake((int)state.ID, body, dir, p, 0, false, true, false, true);
-
-
 
             int dirX = rand.Next(-1, 2);
             int dirY;
@@ -190,28 +162,20 @@ public class ServerController
             body.Add(head);
             Snake snake = new Snake((int)state.ID, body, dir, p, 0, false, true, false, true);
 
-            this.theWorld.Snakes[(int)state.ID] = snake;
+            lock (theWorld.Snakes)
+            {
+                this.theWorld.Snakes[(int)state.ID] = snake;
+            }
 
             // Remove it from the SocketState's growable buffer
             state.RemoveData(0, p.Length);
 
-            // Broadcast the message to all clients
-            // Lock here beccause we can't have new connections 
-            // adding while looping through the clients list.
-            // We also need to remove any disconnected clients.
-            //HashSet<long> disconnectedClients = new HashSet<long>();
-            //lock (clients)
-            //{
-            //    foreach (SocketState client in clients.Values)
-            //    {
-            //        //TODO: change sending info
-            //        if (!Networking.Send(client.TheSocket!, "Message from client " + state.ID + ": " + p))
-            //            disconnectedClients.Add(client.ID);
-            //    }
-            //}
-
-            //foreach (long id in disconnectedClients)
-            //    RemoveClient(id);
+            // Save the client state
+            // Need to lock here because clients can disconnect at any time
+            lock (clients)
+            {
+                clients[state.ID] = state;
+            }
 
             state.OnNetworkAction = CommandRequest;
 
@@ -278,38 +242,21 @@ public class ServerController
 
             if (p.Contains("up"))
             {
-                //snake.dir.X = 0;
-                //snake.dir.Y = -1;
-
-                //snake.body.Add(new Vector2D(head.GetX(), head.GetY()));
-                //movementRequest = "up";
                 snake.ChangeDirection("up", this.snakeSpeed);
             }
 
             if (p.Contains("left"))
             {
-                //snake.body.Add(new Vector2D());
-                //snake.dir.X = -1;
-                //snake.dir.Y = 0;
-                //movementRequest = "left";
                 snake.ChangeDirection("left", this.snakeSpeed);
             }
 
             if (p.Contains("down"))
             {
-                //snake.body.Add(new Vector2D());
-                //snake.dir.X = 0;
-                //snake.dir.Y = 1;
-                //movementRequest = "down";
                 snake.ChangeDirection("down", this.snakeSpeed);
             }
 
             if (p.Contains("right"))
             {
-                //snake.body.Add(new Vector2D());
-                //snake.dir.X = 1;
-                //snake.dir.Y = 0;
-                //movementRequest = "right";
                 snake.ChangeDirection("right", this.snakeSpeed);
             }
 
@@ -333,7 +280,7 @@ public class ServerController
         Console.WriteLine("Client " + id + " disconnected");
         lock (clients)
         {
-            lock (theWorld)
+            lock (theWorld.Snakes)
             {
                 theWorld.Snakes.Remove((int)id);
             }
@@ -370,9 +317,12 @@ public class ServerController
         // cleanup the deactivated objects
         IEnumerable<int> playersToRemove = theWorld.Snakes.Values.Where(x => !x.alive).Select(x => x.snake);
         IEnumerable<int> powsToRemove = theWorld.PowerUps.Values.Where(x => x.died).Select(x => x.power);
-        foreach (int i in playersToRemove)
+        lock (theWorld.Snakes)
         {
-            //theWorld.Snakes.Remove(i);
+            foreach (int i in playersToRemove)
+            {
+                theWorld.Snakes.Remove(i);
+            }
         }
         foreach (int i in powsToRemove)
             theWorld.PowerUps.Remove(i);
@@ -380,22 +330,18 @@ public class ServerController
         // add new objects back in
         int halfSize = size / 2;
 
-        // TODO: This is an infinite loop which is why it only printed the frame rate once
-        //while (theWorld.Snakes.Count < maxPlayers)
-        //{
-        //    // TODO: Figure out correct params to enter into the constructor
-        //    //Snake p = new Snake(nextPlayerID++, -halfSize + rand.Next(size), -halfSize + rand.Next(size), rand.NextDouble() * 360);
-        //    //theWorld.Snakes.Add(p.snake, p);
-        //}
-
-        //while (theWorld.PowerUps.Count < maxPowerups)
-        //{
-        //    PowerUp p = new PowerUp(nextPowID++, new Vector2D(-halfSize + rand.Next(size), -halfSize + rand.Next(size)), false);
-        //    theWorld.PowerUps.Add(p.power, p);
-        //}
+        while (theWorld.PowerUps.Count < maxPowerups)
+        {
+            PowerUp p = new PowerUp(nextPowID++, this.PowerupSpawn(25), false);
+            //this.theWorld.PowerUps[nextPowID] = p;
+            lock(theWorld.PowerUps)
+            {
+                theWorld.PowerUps.Add(p.power, p);
+            }
+        }
 
         // move/update the existing objects in the world
-
+        
         StringBuilder stringBuilder = new StringBuilder();
 
         lock (theWorld.Snakes.Values)
@@ -420,9 +366,12 @@ public class ServerController
                     watch.Stop();
 
                     Console.WriteLine("Snake Collision: " + p.snake + " " + p.body.Last().GetX() + " " + p.body.Last().GetY());
-
-                    this.theWorld.Snakes[p.snake] = SnakeSpawn(p.snake, p.name);
                     stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
+                    lock (theWorld.Snakes)
+                    {
+                        this.theWorld.Snakes[p.snake] = SnakeSpawn(p.snake, p.name);
+                    }
+                    //stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
                     continue;
                 }
 
@@ -448,14 +397,6 @@ public class ServerController
             stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
         }
 
-
-        foreach (SocketState state in this.clients.Values)
-        {
-
-            //Networking.Send(state.TheSocket, stringBuilder.ToString());
-        }
-
-
         // Broadcast the message to all clients
         // Lock here beccause we can't have new connections 
         // adding while looping through the clients list.
@@ -475,8 +416,6 @@ public class ServerController
         {
             RemoveClient(id);
         }
-
-
     }
 
     private bool SnakeWallCollision(Snake snake)
@@ -587,10 +526,7 @@ public class ServerController
                 //Console.WriteLine(s + " Collision detected");
                 return true;
             }
-            
-
         }
-
         return false;
     }
 
