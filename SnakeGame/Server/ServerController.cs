@@ -25,19 +25,15 @@ public class ServerController
 
     // settings
     private long msPerFrame;
-    private int maxPlayers = 50;
     private int maxPowerups = 20;
     private int RespawnRate;
     private int size;
-
-    private int nextPlayerID = 0;
     private int nextPowID = 0;
     private GameSettings gameSettings;
 
     // A map of clients that are connected, each with an ID
     private Dictionary<long, SocketState> clients;
 
-    string movementRequest = "none";
     int snakeSpeed = 6;
 
 
@@ -135,52 +131,9 @@ public class ServerController
             // So we need to ignore it if this happens. 
             if (p[p.Length - 1] != '\n')
                 break;
-            Console.WriteLine("received message from client " + state.ID + ": \"" + p.Substring(0, p.Length - 1) + "\"");
 
-
-            // I left it static for now
-            double headX = rand.Next(-size / 2, size / 2);
-            double headY = rand.Next(-size / 2, size / 2);
-
-            int dirX = rand.Next(-1, 2);
-            int dirY;
-            //Console.WriteLine(dirX);
-            if (dirX == 0)
-            {
-                dirY = rand.Next(-1, 1) + 1;
-            }
-            else
-            {
-                dirY = 0;
-            }
-
-            //Console.WriteLine(dirY);
-
-            Vector2D dir = new Vector2D(dirX, dirY);
-            Vector2D head = new Vector2D(headX, headY);
-            Vector2D tail = new Vector2D(0, 0);
-
-            if (dir.ToAngle() == 0)
-            {
-                tail = new Vector2D(headX, headY + 120);
-            }
-            else if (dir.ToAngle() == 90)
-            {
-                tail = new Vector2D(headX - 120, headY);
-            }
-            else if (dir.ToAngle() == 180)
-            {
-                tail = new Vector2D(headX, headY - 120);
-            }
-            else if (dir.ToAngle() == -90)
-            {
-                tail = new Vector2D(headX + 120, headY);
-            }
-            List<Vector2D> body = new List<Vector2D>();
-            body.Add(tail);
-            body.Add(head);
-            Snake snake = new Snake((int)state.ID, body, dir, p, 0, false, true, false, true);
-            //Snake snake = this.SnakeSpawn((int)state.ID, p);
+            // Spawns a snake in a random location
+            Snake snake = this.SnakeSpawn((int)state.ID, p);
 
             lock (theWorld)
             {
@@ -210,14 +163,12 @@ public class ServerController
                 stringBuilder.Append(jsonString + "\n");
             }
 
-            foreach(PowerUp powerUp in this.theWorld.PowerUps.Values)
+            foreach (PowerUp powerUp in this.theWorld.PowerUps.Values)
             {
                 string jsonString = JsonSerializer.Serialize(powerUp);
 
                 stringBuilder.Append(jsonString + "\n");
             }
-
-            Console.WriteLine(stringBuilder.ToString());
             Networking.Send(state.TheSocket, stringBuilder.ToString());
         }
     }
@@ -271,27 +222,22 @@ public class ServerController
 
             if (p.Contains("up"))
             {
-                snake.ChangeDirection("up", this.snakeSpeed);
+                snake.ChangeDirection("up");
             }
 
             if (p.Contains("left"))
             {
-                snake.ChangeDirection("left", this.snakeSpeed);
+                snake.ChangeDirection("left");
             }
 
             if (p.Contains("down"))
             {
-                snake.ChangeDirection("down", this.snakeSpeed);
+                snake.ChangeDirection("down");
             }
 
             if (p.Contains("right"))
             {
-                snake.ChangeDirection("right", this.snakeSpeed);
-            }
-
-            if (p.Contains("none"))
-            {
-                movementRequest = "none";
+                snake.ChangeDirection("right");
             }
 
             // Remove it from the SocketState's growable buffer
@@ -310,12 +256,6 @@ public class ServerController
         lock (clients)
         {
             theWorld.Snakes[(int)id].alive = false;
-            //theWorld.Snakes[(int)id].died = true;
-
-            //lock (theWorld)
-            //{
-            //    theWorld.Snakes.Remove((int)id);
-            //}
             clients.Remove(id);
 
         }
@@ -337,14 +277,11 @@ public class ServerController
             while (watch.ElapsedMilliseconds < msPerFrame)
             { /* empty loop body */}
 
-            //Console.WriteLine(watch.ElapsedMilliseconds);
             watch.Restart();
-
 
             Update();
 
             ServerUpdate?.Invoke(theWorld.Snakes.Values, theWorld.PowerUps.Values);
-
         }
     }
 
@@ -360,10 +297,6 @@ public class ServerController
         IEnumerable<int> powsToRemove = theWorld.PowerUps.Values.Where(x => x.died).Select(x => x.power);
         lock (theWorld)
         {
-            foreach (int i in playersToRemove)
-            {
-                //RemoveClient(i);
-            }
 
             foreach (int i in powsToRemove)
                 theWorld.PowerUps.Remove(i);
@@ -375,15 +308,14 @@ public class ServerController
         while (theWorld.PowerUps.Count < maxPowerups)
         {
             PowerUp p = new PowerUp(nextPowID++, this.PowerupSpawn(25), false);
-            //this.theWorld.PowerUps[nextPowID] = p;
-            lock(theWorld)
+            lock (theWorld)
             {
                 theWorld.PowerUps.Add(p.power, p);
             }
         }
 
         // move/update the existing objects in the world
-        
+
         StringBuilder stringBuilder = new StringBuilder();
 
         lock (theWorld)
@@ -392,18 +324,15 @@ public class ServerController
             {
                 if (!clients.ContainsKey(p.snake))
                 {
-                    //p.died = false;
                     p.alive = false;
                 }
 
                 if (p.alive)
                 {
-                    //Console.WriteLine(p.body.Last().GetX() + " " + p.body.Last().GetY());
                     bool isSnakeColliding = SnakeWallCollision(p) || this.SnakeCollisionSnake(p) || this.SnakeCollisionSelf(p);
 
                     if (isSnakeColliding)
                     {
-                        //p.alive = false;
                         p.died = true;
 
                         System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
@@ -414,29 +343,24 @@ public class ServerController
 
                         watch.Stop();
 
-                        Console.WriteLine("Snake Collision: " + p.snake + " " + p.body.Last().GetX() + " " + p.body.Last().GetY());
                         stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
-                       
+
                         this.theWorld.Snakes[p.snake] = SnakeSpawn(p.snake, p.name);
-                       
-                        //stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
                         continue;
                     }
 
-                    p.Step(this.snakeSpeed, movementRequest);
+                    p.Step(this.snakeSpeed);
 
                     bool isPowerupCollide = this.SnakePowerupCollision(p);
                     if (isPowerupCollide)
                     {
                         p.score++;
-                        //p.RecievedPowerup();
-                        Console.WriteLine("powerup");
+                        p.frameRate = msPerFrame;
                         Thread thread = new Thread(p.RecievedPowerup);
                         thread.Start();
                     }
                 }
 
-                movementRequest = "none";
                 stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
             }
         }
@@ -455,7 +379,6 @@ public class ServerController
         {
             foreach (SocketState client in clients.Values)
             {
-                //TODO: change sending info
                 if (!Networking.Send(client.TheSocket!, stringBuilder.ToString()))
                     disconnectedClients.Add(client.ID);
             }
@@ -500,8 +423,6 @@ public class ServerController
             if (p1.GetX() - wallWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + wallWidth + snakeWidth
                 && p1.GetY() - wallWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + wallWidth + snakeWidth)
             {
-                //Console.WriteLine("Collision detected");
-                //Console.WriteLine(s + " Collision detected");
                 return true;
             }
         }
@@ -521,7 +442,6 @@ public class ServerController
         {
             int snakeWidth = 10;
             int wallWidth = 25;
-            string s = "";
             Vector2D p1;
             Vector2D p2;
 
@@ -544,8 +464,6 @@ public class ServerController
             if (p1.GetX() - wallWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + wallWidth + snakeWidth
                 && p1.GetY() - wallWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + wallWidth + snakeWidth)
             {
-                //Console.WriteLine("Collision detected");
-                //Console.WriteLine(s + " Collision detected");
                 return true;
             }
         }
@@ -562,7 +480,7 @@ public class ServerController
     {
         int snakeWidth = 10;
 
-        if(snake.body.Count < 5)
+        if (snake.body.Count < 5)
         {
             return false;
         }
@@ -572,7 +490,7 @@ public class ServerController
         for (int i = 0; i < snake.body.Count - 4; i++)
         {
             int j = i + 1;
-            
+
             Vector2D p1 = snake.body[i];
             Vector2D p2 = snake.body[j];
 
@@ -586,11 +504,9 @@ public class ServerController
             double snakeHeadY = head.GetY();
 
 
-            if (p1.GetX()  - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX()  + snakeWidth
-                && p1.GetY()  - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + snakeWidth)
+            if (p1.GetX() - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + snakeWidth
+                && p1.GetY() - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + snakeWidth)
             {
-                //Console.WriteLine("Collision detected");
-                //Console.WriteLine(s + " Collision detected");
                 return true;
             }
         }
@@ -607,14 +523,13 @@ public class ServerController
     {
         foreach (Snake p in theWorld.Snakes.Values)
         {
-            if(p.snake == snake.snake || p.died)
+            if (p.snake == snake.snake || p.died)
             {
                 continue;
             }
 
             int snakeWidth = 10;
 
-            string s = "";
             Vector2D p1;
             Vector2D p2;
             if (p.Equals(snake))
@@ -639,8 +554,6 @@ public class ServerController
                     if (p1.GetX() - snakeWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + snakeWidth + snakeWidth
                         && p1.GetY() - snakeWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + snakeWidth + snakeWidth)
                     {
-                        Console.WriteLine("Collision detected");
-                        Console.WriteLine(s + " Collision detected");
                         return true;
                     }
                 }
@@ -667,8 +580,6 @@ public class ServerController
                     if (p1.GetX() - snakeWidth - snakeWidth < snakeHeadX && snakeHeadX < p2.GetX() + snakeWidth + snakeWidth
                         && p1.GetY() - snakeWidth - snakeWidth < snakeHeadY && snakeHeadY < p2.GetY() + snakeWidth + snakeWidth)
                     {
-                        Console.WriteLine("Collision detected");
-                        Console.WriteLine(s + " Collision detected");
                         return true;
                     }
                 }
@@ -692,7 +603,7 @@ public class ServerController
 
         int dirX = rand.Next(-1, 2);
         int dirY;
-        //Console.WriteLine(dirX);
+
         if (dirX == 0)
         {
             dirY = rand.Next(-1, 1) + 1;
@@ -701,8 +612,6 @@ public class ServerController
         {
             dirY = 0;
         }
-
-        //Console.WriteLine(dirY);
 
         Vector2D dir = new Vector2D(dirX, dirY);
         Vector2D head = new Vector2D(headX, headY);
@@ -743,7 +652,6 @@ public class ServerController
 
             dirX = rand.Next(-1, 2);
 
-            //Console.WriteLine(dirX);
             if (dirX == 0)
             {
                 dirY = rand.Next(-1, 1) + 1;
@@ -752,8 +660,6 @@ public class ServerController
             {
                 dirY = 0;
             }
-
-            //Console.WriteLine(dirY);
 
             dir = new Vector2D(dirX, dirY);
             head = new Vector2D(headX, headY);
@@ -781,7 +687,7 @@ public class ServerController
 
             snake = new Snake(ID, body, dir, name, 0, false, true, false, true);
 
-            
+
             isSnakeCollidingWall = !(this.SnakeBodyCollision(snake, 0)
                                 || this.SnakeBodyCollision(snake, 1)
                                 || this.SnakeWallCollision(snake));
@@ -800,9 +706,7 @@ public class ServerController
     {
 
         int powerupWidth = 10;
-        //int snakeWidth = 10;
         int wallWidth = 25;
-
 
         foreach (Wall wall in this.theWorld.Walls.Values)
         {
@@ -828,7 +732,7 @@ public class ServerController
 
             bool collision = false;
 
-            while(!collision)
+            while (!collision)
             {
                 if (p1.GetX() - wallWidth - powerupWidth - offset < locationX && locationX < p2.GetX() + wallWidth + powerupWidth + offset
                 && p1.GetY() - wallWidth - powerupWidth - offset < locationY && locationY < p2.GetY() + wallWidth + powerupWidth + offset)
@@ -847,7 +751,7 @@ public class ServerController
             }
             return location;
 
-            
+
         }
         return new Vector2D();
     }
@@ -861,12 +765,11 @@ public class ServerController
     {
         int snakeWidth = 10;
         int powerupWidth = 10;
-        foreach(PowerUp powerUp in this.theWorld.PowerUps.Values)
+        foreach (PowerUp powerUp in this.theWorld.PowerUps.Values)
         {
-            if((powerUp.loc - snake.body.Last()).Length() < snakeWidth + powerupWidth)
+            if ((powerUp.loc - snake.body.Last()).Length() < snakeWidth + powerupWidth)
             {
                 powerUp.died = true;
-                Console.WriteLine("Powerup Collision");
                 return true;
             }
         }

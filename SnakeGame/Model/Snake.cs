@@ -1,6 +1,7 @@
 ﻿//Authors: Kevin Soto-Miranda 2023, Markus Buckwalter 2023. 
 
 using System;
+
 using System.Text.Json.Serialization;
 using SnakeGame;
 namespace Model
@@ -19,6 +20,8 @@ namespace Model
         public bool alive { get; set; }
         public bool dc { get; set; }
         public bool join { get; set; }
+
+        public long frameRate { get; set; }
 
         private bool recievedPowerup;
 
@@ -57,14 +60,12 @@ namespace Model
         /// </summary>
         /// <param name="movementRequest">The direction the client requested.</param>
         /// <param name="speed"></param>
-        public void ChangeDirection(string movementRequest, int speed)
+        public void ChangeDirection(string movementRequest)
         {
             Vector2D right = new Vector2D(1, 0);
             Vector2D left = new Vector2D(-1, 0);
             Vector2D up = new Vector2D(0, -1);
             Vector2D down = new Vector2D(0, 1);
-
-            Console.WriteLine(this.dir.Equals(right));
 
             if (movementRequest == "right" && !this.dir.Equals(left))
             {
@@ -72,7 +73,7 @@ namespace Model
             }
             else if (movementRequest == "left" && !this.dir.Equals(right))
             {
-                
+
                 this.dir = new Vector2D(-1, 0);
             }
             else if (movementRequest == "up" && !this.dir.Equals(down))
@@ -92,7 +93,7 @@ namespace Model
         /// </summary>
         public void RecievedPowerup()
         {
-            int frameRate = 34;
+            long frameRate = this.frameRate;
             double deltaTime = 1000 / frameRate;
             System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
@@ -113,7 +114,7 @@ namespace Model
         /// </summary>
         /// <param name="speed">The speed of the snake.</param>
         /// <param name="movementRequest"></param>
-        public void Step(int speed, string movementRequest)
+        public void Step(int speed)
         {
             int snakeSpeed = speed;
             if (this.dir.Equals(new Vector2D(0, 0)))
@@ -156,21 +157,5 @@ namespace Model
                 this.body.RemoveAt(0);
             }
         }
-
-        /// <summary>
-        /// This method will make the snake turn when it has reached the
-        /// end of the world where there are no walls.
-        /// </summary>
-        public void WrapAround()
-        {
-            if(this.body.Last().GetX() >= 999)
-            {
-                this.body.Add(new Vector2D(-999, body.Last().GetY()));
-                this.body.Add(new Vector2D(-999, body.Last().GetY()));
-
-
-            }
-        }
-
     }
 }

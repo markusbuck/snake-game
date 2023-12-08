@@ -17,9 +17,11 @@ namespace Server
 
             XmlReader reader = XmlReader.Create("settings.xml");
 
-            GameSettings gameSettings = (GameSettings)ser.ReadObject(reader);
+            GameSettings? gameSettings = ser.ReadObject(reader) as GameSettings;
 
+#pragma warning disable CS8604 // Possible null reference argument.
             ServerController server = new ServerController(gameSettings);
+#pragma warning restore CS8604 // Possible null reference argument.
 
             //Console.WriteLine("Starting Server");
             server.BeginServer();
