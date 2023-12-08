@@ -280,10 +280,13 @@ public class ServerController
         Console.WriteLine("Client " + id + " disconnected");
         lock (clients)
         {
-            lock (theWorld.Snakes)
-            {
-                theWorld.Snakes.Remove((int)id);
-            }
+            theWorld.Snakes[(int)id].alive = false;
+            //theWorld.Snakes[(int)id].died = true;
+
+            //lock (theWorld.Snakes)
+            //{
+            //    theWorld.Snakes.Remove((int)id);
+            //}
             clients.Remove(id);
 
         }
@@ -321,7 +324,7 @@ public class ServerController
         {
             foreach (int i in playersToRemove)
             {
-                theWorld.Snakes.Remove(i);
+                //theWorld.Snakes.Remove(i);
             }
         }
         foreach (int i in powsToRemove)
@@ -344,47 +347,55 @@ public class ServerController
         
         StringBuilder stringBuilder = new StringBuilder();
 
-        lock (theWorld.Snakes.Values)
+        lock (theWorld.Snakes)
         {
             foreach (Snake p in theWorld.Snakes.Values)
             {
-
-                //Console.WriteLine(p.body.Last().GetX() + " " + p.body.Last().GetY());
-                bool isSnakeColliding = SnakeWallCollision(p) || this.SnakeCollisionSnake(p) || this.SnakeCollisionSelf(p);
-
-                if (p.alive && isSnakeColliding)
+                if (!clients.ContainsKey(p.snake))
                 {
+                    //p.died = false;
                     p.alive = false;
-                    p.died = true;
-
-                    System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
-                    watch.Start();
-                    // wait until the next frame
-                    while (watch.ElapsedMilliseconds < RespawnRate)
-                    { /* empty loop body */}
-
-                    watch.Stop();
-
-                    Console.WriteLine("Snake Collision: " + p.snake + " " + p.body.Last().GetX() + " " + p.body.Last().GetY());
-                    stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
-                    lock (theWorld.Snakes)
-                    {
-                        this.theWorld.Snakes[p.snake] = SnakeSpawn(p.snake, p.name);
-                    }
-                    //stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
-                    continue;
                 }
 
-                p.Step(this.snakeSpeed, movementRequest);
-
-                bool isPowerupCollide = this.SnakePowerupCollision(p);
-                if (isPowerupCollide)
+                if (p.alive)
                 {
-                    p.score++;
-                    //p.RecievedPowerup();
-                    Console.WriteLine("powerup");
-                    Thread thread = new Thread(p.RecievedPowerup);
-                    thread.Start();
+                    //Console.WriteLine(p.body.Last().GetX() + " " + p.body.Last().GetY());
+                    bool isSnakeColliding = SnakeWallCollision(p) || this.SnakeCollisionSnake(p) || this.SnakeCollisionSelf(p);
+
+                    if (isSnakeColliding)
+                    {
+                        //p.alive = false;
+                        p.died = true;
+
+                        System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+                        watch.Start();
+                        // wait until the next frame
+                        while (watch.ElapsedMilliseconds < RespawnRate)
+                        { /* empty loop body */}
+
+                        watch.Stop();
+
+                        Console.WriteLine("Snake Collision: " + p.snake + " " + p.body.Last().GetX() + " " + p.body.Last().GetY());
+                        stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
+                        lock (theWorld.Snakes)
+                        {
+                            this.theWorld.Snakes[p.snake] = SnakeSpawn(p.snake, p.name);
+                        }
+                        //stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
+                        continue;
+                    }
+
+                    p.Step(this.snakeSpeed, movementRequest);
+
+                    bool isPowerupCollide = this.SnakePowerupCollision(p);
+                    if (isPowerupCollide)
+                    {
+                        p.score++;
+                        //p.RecievedPowerup();
+                        Console.WriteLine("powerup");
+                        Thread thread = new Thread(p.RecievedPowerup);
+                        thread.Start();
+                    }
                 }
 
                 movementRequest = "none";
@@ -534,7 +545,7 @@ public class ServerController
     {
         foreach (Snake p in theWorld.Snakes.Values)
         {
-            if(p.snake == snake.snake)
+            if(p.snake == snake.snake || p.died)
             {
                 continue;
             }
@@ -651,9 +662,9 @@ public class ServerController
         Snake snake = new Snake(ID, body, dir, name, 0, false, true, false, true);
 
 
-        bool isSnakeCollidingWall = this.SnakeBodyCollision(snake, 0) ||
+        bool isSnakeCollidingWall = !(this.SnakeBodyCollision(snake, 0) ||
                                     this.SnakeBodyCollision(snake, 1) ||
-                                    this.SnakeWallCollision(snake);
+                                    this.SnakeWallCollision(snake));
 
         while (!isSnakeCollidingWall)
         {
@@ -702,9 +713,9 @@ public class ServerController
             snake = new Snake(ID, body, dir, name, 0, false, true, false, true);
 
             
-            isSnakeCollidingWall = this.SnakeBodyCollision(snake, 0)
+            isSnakeCollidingWall = !(this.SnakeBodyCollision(snake, 0)
                                 || this.SnakeBodyCollision(snake, 1)
-                                || this.SnakeWallCollision(snake);
+                                || this.SnakeWallCollision(snake));
         }
 
         return snake;
