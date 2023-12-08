@@ -182,7 +182,7 @@ public class ServerController
             Snake snake = new Snake((int)state.ID, body, dir, p, 0, false, true, false, true);
             //Snake snake = this.SnakeSpawn((int)state.ID, p);
 
-            lock (theWorld.Snakes)
+            lock (theWorld)
             {
                 this.theWorld.Snakes[(int)state.ID] = snake;
             }
@@ -312,10 +312,10 @@ public class ServerController
             theWorld.Snakes[(int)id].alive = false;
             //theWorld.Snakes[(int)id].died = true;
 
-            //lock (theWorld.Snakes)
-            //{
-            //    theWorld.Snakes.Remove((int)id);
-            //}
+            lock (theWorld)
+            {
+                theWorld.Snakes.Remove((int)id);
+            }
             clients.Remove(id);
 
         }
@@ -358,15 +358,16 @@ public class ServerController
         // cleanup the deactivated objects
         IEnumerable<int> playersToRemove = theWorld.Snakes.Values.Where(x => !x.alive).Select(x => x.snake);
         IEnumerable<int> powsToRemove = theWorld.PowerUps.Values.Where(x => x.died).Select(x => x.power);
-        lock (theWorld.Snakes)
+        lock (theWorld)
         {
             foreach (int i in playersToRemove)
             {
-                //theWorld.Snakes.Remove(i);
+                RemoveClient(i);
             }
+
+            foreach (int i in powsToRemove)
+                theWorld.PowerUps.Remove(i);
         }
-        foreach (int i in powsToRemove)
-            theWorld.PowerUps.Remove(i);
 
         // add new objects back in
         int halfSize = size / 2;
@@ -375,7 +376,7 @@ public class ServerController
         {
             PowerUp p = new PowerUp(nextPowID++, this.PowerupSpawn(25), false);
             //this.theWorld.PowerUps[nextPowID] = p;
-            lock(theWorld.PowerUps)
+            lock(theWorld)
             {
                 theWorld.PowerUps.Add(p.power, p);
             }
@@ -385,7 +386,7 @@ public class ServerController
         
         StringBuilder stringBuilder = new StringBuilder();
 
-        lock (theWorld.Snakes)
+        lock (theWorld)
         {
             foreach (Snake p in theWorld.Snakes.Values)
             {
@@ -415,10 +416,9 @@ public class ServerController
 
                         Console.WriteLine("Snake Collision: " + p.snake + " " + p.body.Last().GetX() + " " + p.body.Last().GetY());
                         stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
-                        lock (theWorld.Snakes)
-                        {
-                            this.theWorld.Snakes[p.snake] = SnakeSpawn(p.snake, p.name);
-                        }
+                       
+                        this.theWorld.Snakes[p.snake] = SnakeSpawn(p.snake, p.name);
+                       
                         //stringBuilder.Append(JsonSerializer.Serialize(p) + "\n");
                         continue;
                     }
