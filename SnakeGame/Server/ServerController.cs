@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿//Authors: Kevin Soto-Miranda 2023, Markus Buckwalter 2023. 
+
+using System.Numerics;
 using System.Xml;
 using SnakeGame;
 using Model;
@@ -10,6 +12,9 @@ using System.Xml.Linq;
 
 namespace Server;
 
+/// <summary>
+/// This class represents the controller for the server.
+/// </summary>
 public class ServerController
 {
     private World theWorld;
@@ -19,11 +24,11 @@ public class ServerController
     public event ServerUpdateHandler? ServerUpdate;
 
     // settings
-    private long msPerFrame = 34;
+    private long msPerFrame;
     private int maxPlayers = 50;
     private int maxPowerups = 20;
-    private int RespawnRate = 100;
-    private int size = 2000;
+    private int RespawnRate;
+    private int size;
 
     private int nextPlayerID = 0;
     private int nextPowID = 0;
@@ -36,11 +41,18 @@ public class ServerController
     int snakeSpeed = 6;
 
 
+    /// <summary>
+    /// This constructor will create all the walls in the world
+    /// that was specified in the GameSettings file. 
+    /// </summary>
+    /// <param name="gameSettings"></param>
     public ServerController(GameSettings gameSettings)
     {
         this.gameSettings = gameSettings;
         this.size = gameSettings.UniverseSize;
         this.theWorld = new World(this.size);
+        this.msPerFrame = gameSettings.MSPerFrame;
+        this.RespawnRate = gameSettings.RespawnRate;
 
         foreach (Wall wall in this.gameSettings.Walls)
         {
@@ -50,6 +62,11 @@ public class ServerController
         this.clients = new Dictionary<long, SocketState>();
     }
 
+    /// <summary>
+    /// This method will start the server in port 11000, and
+    /// uses the NewClientConnected as a call back for when new clients
+    /// are trying to connect to the server.
+    /// </summary>
     public void BeginServer()
     {
         Console.WriteLine("Server started");
@@ -58,9 +75,9 @@ public class ServerController
 
     /// <summary>
     /// Method to be invoked by the networking library
-    /// when a new client connects (see line 41)
+    /// when a new client connects 
     /// </summary>
-    /// <param name="state">The SocketState representing the new client</param>
+    /// <param name="state">The SocketState representing the new client.</param>
     private void NewClientConnected(SocketState state)
     {
         Console.WriteLine("Client Connected");
@@ -77,9 +94,9 @@ public class ServerController
 
     /// <summary>
     /// Method to be invoked by the networking library
-    /// when a network action occurs (see lines 64-66)
+    /// when a network action occurs
     /// </summary>
-    /// <param name="state"></param>
+    /// <param name="state">The SocketState representing the new client.</param>
     private void ReceiveMessage(SocketState state)
     {
         // Remove the client if they aren't still connected
@@ -89,16 +106,18 @@ public class ServerController
             return;
         }
 
-        // TODO : This was called when the client gets closed, idk why
-        //state.OnNetworkAction = ProcessMessage;
-
         ProcessMessage(state);
 
         // Continue the event loop that receives messages from this client
         Networking.GetData(state);
     }
 
-
+    /// <summary>
+    /// This method will process the message recieved from the clients state, and
+    /// send the start up information to the client. The start up information consists of
+    /// the players ID, world size, and all the walls in the world.
+    /// </summary>
+    /// <param name="state">The SocketState representing the new client.</param>
     private void ProcessMessage(SocketState state)
     {
         string totalData = state.GetData();
@@ -161,6 +180,7 @@ public class ServerController
             body.Add(tail);
             body.Add(head);
             Snake snake = new Snake((int)state.ID, body, dir, p, 0, false, true, false, true);
+            //Snake snake = this.SnakeSpawn((int)state.ID, p);
 
             lock (theWorld.Snakes)
             {
@@ -202,7 +222,11 @@ public class ServerController
         }
     }
 
-
+    /// <summary>
+    /// Method to be invoked by the networking library
+    /// when a client sends a command request.
+    /// </summary>
+    /// <param name="state">The SocketState representing the new client.</param>
     private void CommandRequest(SocketState state)
     {
         // Remove the client if they aren't still connected
@@ -218,6 +242,11 @@ public class ServerController
         Networking.GetData(state);
     }
 
+    /// <summary>
+    /// This method will process the command recieved from the clients socket
+    /// and will change the direction of the snake.
+    /// </summary>
+    /// <param name="state">The SocketState representing the client.</param>
     private void ProcessCommand(SocketState state)
     {
 
@@ -292,6 +321,10 @@ public class ServerController
         }
     }
 
+    /// <summary>
+    /// This method will create a stop watch to determine the framerate of updating
+    /// the clients.
+    /// </summary>
     public void Run()
     {
         // Start a new timer to control the frame rate
@@ -315,6 +348,11 @@ public class ServerController
         }
     }
 
+    /// <summary>
+    /// This method will update all the snakes locations, generate new locations for powerups
+    /// and will determine if a snake has collided with an object. It will then send a serialized
+    /// string of all the snakes and powerups to all the clients in the server.
+    /// </summary>
     private void Update()
     {
         // cleanup the deactivated objects
@@ -429,6 +467,12 @@ public class ServerController
         }
     }
 
+    /// <summary>
+    /// This method is used to check if a snake has collided with all
+    /// the walls in the world.
+    /// </summary>
+    /// <param name="snake">The snake used to check the collision with the walls.</param>
+    /// <returns>Returns true if the snake has collided with a wall, false otherwise.</returns>
     private bool SnakeWallCollision(Snake snake)
     {
         foreach (Wall wall in this.theWorld.Walls.Values)
@@ -464,6 +508,13 @@ public class ServerController
         return false;
     }
 
+    /// <summary>
+    /// This method is used to determine if a snakes body element has collided with
+    /// all the walls in the world.
+    /// </summary>
+    /// <param name="snake">The snake used to check the collisions with the walls.</param>
+    /// <param name="bodyIndex">The index of the body to check for collisions.</param>
+    /// <returns>Returns true if the snakes body segment has collided with a wall, false otherise.</returns>
     private bool SnakeBodyCollision(Snake snake, int bodyIndex)
     {
         foreach (Wall wall in this.theWorld.Walls.Values)
@@ -502,6 +553,11 @@ public class ServerController
         return false;
     }
 
+    /// <summary>
+    /// This method is used to determine if the snake has collided with itself.
+    /// </summary>
+    /// <param name="snake">The snake used to check for the collisions of itself</param>
+    /// <returns>Returns true if the snake has collided with itself, false otherwise.</returns>
     private bool SnakeCollisionSelf(Snake snake)
     {
         int snakeWidth = 10;
@@ -541,6 +597,12 @@ public class ServerController
         return false;
     }
 
+    /// <summary>
+    /// This method is used to check if the snake has collided with all the
+    /// other snakes in the world.
+    /// </summary>
+    /// <param name="snake">The snake used to check for collisions with all the other snakes.</param>
+    /// <returns>Returns true if the snake has collided wih another snake, false otherwise.</returns>
     private bool SnakeCollisionSnake(Snake snake)
     {
         foreach (Snake p in theWorld.Snakes.Values)
@@ -615,6 +677,13 @@ public class ServerController
         return false;
     }
 
+    /// <summary>
+    /// This method will spawn a snake in a location where it does not collide
+    /// with other snakes, walls, and powerups in the world.
+    /// </summary>
+    /// <param name="ID">The id of the client to create the snake.</param>
+    /// <param name="name">The name of the snake.</param>
+    /// <returns>Returns the a new snake that is not colliding with other objects in the world.</returns>
     private Snake SnakeSpawn(int ID, string name)
     {
         double headX = rand.Next(-size / 2, size / 2);
@@ -721,6 +790,12 @@ public class ServerController
         return snake;
     }
 
+    /// <summary>
+    /// This method will spawn powerups in the world that will not collide
+    /// with snakes, and walls in the world.
+    /// </summary>
+    /// <param name="offset">An offset for the powerup to not collide with walls.</param>
+    /// <returns>Returns a Vector2D that is the location of the powerup.</returns>
     private Vector2D PowerupSpawn(int offset)
     {
 
@@ -777,6 +852,11 @@ public class ServerController
         return new Vector2D();
     }
 
+    /// <summary>
+    /// This method will check if a snake has collided with a powerup in the world.
+    /// </summary>
+    /// <param name="snake">The snake used to check for collisions with all the powerups.</param>
+    /// <returns>Returns true if the snake has collided with a powerup.</returns>
     private bool SnakePowerupCollision(Snake snake)
     {
         int snakeWidth = 10;

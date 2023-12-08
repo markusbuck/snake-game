@@ -51,6 +51,12 @@ namespace Model
             this.join = join;
         }
 
+        /// <summary>
+        /// This method will change the snakes direction depending on the movement
+        /// request it recieved.
+        /// </summary>
+        /// <param name="movementRequest">The direction the client requested.</param>
+        /// <param name="speed"></param>
         public void ChangeDirection(string movementRequest, int speed)
         {
             Vector2D right = new Vector2D(1, 0);
@@ -80,6 +86,10 @@ namespace Model
             this.body.Add(this.body.Last());
         }
 
+        /// <summary>
+        /// This method will increase the snakes length when a powerup is collected
+        /// by the specified framerate.
+        /// </summary>
         public void RecievedPowerup()
         {
             int frameRate = 34;
@@ -97,6 +107,12 @@ namespace Model
 
         }
 
+        /// <summary>
+        /// This method will add a velocity to the snake head depending
+        /// on the angle its going towards.
+        /// </summary>
+        /// <param name="speed">The speed of the snake.</param>
+        /// <param name="movementRequest"></param>
         public void Step(int speed, string movementRequest)
         {
             int snakeSpeed = speed;
@@ -141,6 +157,10 @@ namespace Model
             }
         }
 
+        /// <summary>
+        /// This method will make the snake turn when it has reached the
+        /// end of the world where there are no walls.
+        /// </summary>
         public void WrapAround()
         {
             if(this.body.Last().GetX() >= 999)

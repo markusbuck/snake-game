@@ -1,4 +1,6 @@
-﻿using System;
+﻿//Authors: Kevin Soto-Miranda 2023, Markus Buckwalter 2023. 
+
+using System;
 using System.Xml.Serialization;
 using System.Runtime.Serialization;
 using Model;
@@ -7,11 +9,15 @@ using System.Xml;
 
 namespace Server
 {
+    /// <summary>
+    /// This class reads a specified XML to be able to obtain its information
+    /// for the server.
+    /// </summary>
     [DataContract(Namespace ="")]
     public class GameSettings
     {
         [DataMember(Name = "MSPerFrame")]
-        public int MSPerFram { get; private set; }
+        public int MSPerFrame { get; private set; }
 
         [DataMember(Name = "RespawnRate")]
         public int RespawnRate { get; private set; }
@@ -22,18 +28,4 @@ namespace Server
         [DataMember(Name ="Walls")]
         public Wall[] Walls { get; private set; }
     }
-
-
-    //public static class Test
-    //{
-    //    static void Main(string[] args)
-    //    {
-    //        DataContractSerializer ser = new(typeof(GameSettings));
-
-    //        XmlReader reader = XmlReader.Create("settings.xml");
-
-    //        GameSettings settings = (GameSettings)ser.ReadObject(reader);
-    //        Console.Read();
-    //    }
-    //}
 }
